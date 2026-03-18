@@ -2,11 +2,13 @@ namespace Base.Contracts.Domain;
 
 /// <summary>
 /// Defines metadata fields that capture creation and update information for an entity.
+/// Repository implementations may leave actor identifiers unchanged when no user context is available.
 /// </summary>
 public interface IBaseEntityMeta
 {
     /// <summary>
     /// Gets or sets the identifier of the actor who created the entity.
+    /// Implementations commonly set this when user context is available.
     /// </summary>
     public string CreatedBy { get; set; }
 
@@ -17,6 +19,7 @@ public interface IBaseEntityMeta
 
     /// <summary>
     /// Gets or sets the identifier of the actor who last updated the entity.
+    /// Implementations commonly set this when user context is available.
     /// </summary>
     public string UpdatedBy { get; set; }
 

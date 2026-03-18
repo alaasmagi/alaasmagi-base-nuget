@@ -19,6 +19,7 @@ public abstract class BaseEntityWithMetaSoftDelete<TKey> : BaseEntity<TKey>, IBa
 {
     /// <summary>
     /// Gets or sets the identifier of the actor who created the entity.
+    /// This value is typically supplied by repository code when user context is available.
     /// </summary>
     [Required]
     [MaxLength(128)]
@@ -32,6 +33,7 @@ public abstract class BaseEntityWithMetaSoftDelete<TKey> : BaseEntity<TKey>, IBa
 
     /// <summary>
     /// Gets or sets the identifier of the actor who last updated the entity.
+    /// This value is typically supplied by repository code when user context is available.
     /// </summary>
     [Required]
     [MaxLength(128)]

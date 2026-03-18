@@ -1,17 +1,22 @@
 using Base.Contracts.DataAccess;
 using Base.Contracts.Domain;
+using Base.Contracts.DTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace Base.DataAccess.EF;
 
 /// <summary>
-/// Provides a reusable Entity Framework repository implementation for entities with an identifier.
+/// Provides a reusable Entity Framework repository implementation that maps between domain and database entities.
 /// </summary>
-/// <typeparam name="TResourceEntity">The entity type managed by the repository.</typeparam>
+/// <typeparam name="TDomainEntity">The domain entity type exposed by the repository.</typeparam>
+/// <typeparam name="TDataAccessEntity">The database entity type persisted by Entity Framework.</typeparam>
+/// <typeparam name="TMapper">The mapper used to translate between domain and database entities.</typeparam>
 /// <typeparam name="TResourceKey">The identifier type of the entity.</typeparam>
 /// <typeparam name="TUserKey">The identifier type of the current user or owner.</typeparam>
-public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepository<TResourceEntity, TResourceKey, TUserKey>
-    where TResourceEntity : class, IBaseEntity<TResourceKey>
+public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TUserKey> : IBaseRepository<TDomainEntity, TResourceKey, TUserKey>
+    where TDomainEntity : class, IBaseEntity<TResourceKey>
+    where TDataAccessEntity : class, IBaseEntity<TResourceKey>
+    where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, TResourceKey>
     where TResourceKey : IEquatable<TResourceKey>
     where TUserKey : IEquatable<TUserKey>
 {
@@ -21,18 +26,25 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     protected readonly DbContext RepositoryDbContext;
 
     /// <summary>
-    /// Stores the entity set used for CRUD operations.
+    /// Stores the mapper used to convert between domain and database entities.
     /// </summary>
-    protected readonly DbSet<TResourceEntity> RepositoryDbSet;
+    protected readonly TMapper RepositoryMapper;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BaseRepository{TResourceEntity, TResourceKey, TUserKey}"/> class.
+    /// Stores the entity set used for CRUD operations.
+    /// </summary>
+    protected readonly DbSet<TDataAccessEntity> RepositoryDbSet;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaseRepository{TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TUserKey}"/> class.
     /// </summary>
     /// <param name="repositoryDbContext">The database context used by the repository.</param>
-    public BaseRepository(DbContext repositoryDbContext)
+    /// <param name="repositoryMapper">The mapper used to translate between entity representations.</param>
+    public BaseRepository(DbContext repositoryDbContext, TMapper repositoryMapper)
     {
         RepositoryDbContext = repositoryDbContext;
-        RepositoryDbSet = RepositoryDbContext.Set<TResourceEntity>();
+        RepositoryMapper = repositoryMapper;
+        RepositoryDbSet = RepositoryDbContext.Set<TDataAccessEntity>();
     }
 
     /// <summary>
@@ -43,7 +55,7 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// <returns>
     /// An <see cref="IQueryable{T}"/> representing the base query for the repository.
     /// </returns>
-    protected virtual IQueryable<TResourceEntity> GetQuery(TUserKey? userId = default!, bool asTracking = false)
+    protected virtual IQueryable<TDataAccessEntity> GetQuery(TUserKey? userId = default!, bool asTracking = false)
     {
         var query = RepositoryDbSet.AsQueryable();
 
@@ -87,7 +99,7 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// </returns>
     private bool ShouldUseUserId(TUserKey? userId = default!)
     {
-        return typeof(IBaseEntityUserId<TUserKey>).IsAssignableFrom(typeof(TResourceEntity)) &&
+        return typeof(IBaseEntityUserId<TUserKey>).IsAssignableFrom(typeof(TDataAccessEntity)) &&
                userId != null &&
                !EqualityComparer<TUserKey>.Default.Equals(userId, default);
     }
@@ -100,7 +112,7 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// </returns>
     private static bool HasMeta()
     {
-        return typeof(IBaseEntityMeta).IsAssignableFrom(typeof(TResourceEntity));
+        return typeof(IBaseEntityMeta).IsAssignableFrom(typeof(TDataAccessEntity));
     }
 
     /// <summary>
@@ -123,9 +135,7 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// <summary>
     /// Applies creation metadata to an entity when the entity type supports metadata fields.
     /// </summary>
-    /// <param name="entity">The entity being created.</param>
-    /// <param name="userId">The optional user identifier used to populate metadata fields.</param>
-    protected virtual void ApplyCreateMetadata(TResourceEntity entity, TUserKey? userId = default!)
+    protected virtual void ApplyCreateMetadata(TDataAccessEntity entity, TUserKey? userId = default!)
     {
         if (!HasMeta())
         {
@@ -149,10 +159,7 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// <summary>
     /// Applies update metadata to an entity while preserving the original creation metadata.
     /// </summary>
-    /// <param name="entity">The updated entity instance.</param>
-    /// <param name="existingEntity">The existing persisted entity instance.</param>
-    /// <param name="userId">The optional user identifier used to populate metadata fields.</param>
-    protected virtual void ApplyUpdateMetadata(TResourceEntity entity, TResourceEntity existingEntity, TUserKey? userId = default!)
+    protected virtual void ApplyUpdateMetadata(TDataAccessEntity entity, TDataAccessEntity existingEntity, TUserKey? userId = default!)
     {
         if (!HasMeta())
         {
@@ -181,9 +188,7 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// <summary>
     /// Applies modification metadata to an entity when the entity type supports metadata fields.
     /// </summary>
-    /// <param name="entity">The entity being modified.</param>
-    /// <param name="userId">The optional user identifier used to populate metadata fields.</param>
-    protected virtual void ApplyModificationMetadata(TResourceEntity entity, TUserKey? userId = default!)
+    protected void ApplyModificationMetadata(TDataAccessEntity entity, TUserKey? userId = default!)
     {
         if (!HasMeta())
         {
@@ -203,142 +208,118 @@ public class BaseRepository<TResourceEntity, TResourceKey, TUserKey> : IBaseRepo
     /// <summary>
     /// Retrieves all entities visible to the specified user.
     /// </summary>
-    /// <param name="userId">The optional user identifier used to scope the query.</param>
-    /// <returns>
-    /// A task that resolves to the matching entities, or <see langword="null"/> when no result set is available.
-    /// </returns>
-    public async Task<IEnumerable<TResourceEntity>?> GetAllAsync(TUserKey? userId = default)
+    public async Task<IEnumerable<TDomainEntity>?> GetAllAsync(TUserKey? userId = default)
     {
-        return await GetQuery(userId)
-            .ToListAsync();
+        var entities = await GetQuery(userId).ToListAsync();
+        return RepositoryMapper.Map(entities);
     }
 
     /// <summary>
     /// Retrieves a page of entities visible to the specified user.
     /// </summary>
-    /// <param name="pageNr">The one-based page number to retrieve.</param>
-    /// <param name="pageSize">The number of items to include in the page.</param>
-    /// <param name="userId">The optional user identifier used to scope the query.</param>
-    /// <returns>
-    /// A task that resolves to the matching entities for the requested page, or <see langword="null"/> when no result set is available.
-    /// </returns>
-    public async Task<IEnumerable<TResourceEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TUserKey? userId = default)
+    public async Task<IEnumerable<TDomainEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TUserKey? userId = default)
     {
         ValidatePaging(pageNr, pageSize);
 
-        return await GetQuery(userId)
+        var entities = await GetQuery(userId)
             .Skip((pageNr - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
+
+        return RepositoryMapper.Map(entities);
     }
 
     /// <summary>
     /// Counts the entities visible to the specified user.
     /// </summary>
-    /// <param name="userId">The optional user identifier used to scope the query.</param>
-    /// <returns>
-    /// A task that resolves to the number of matching entities.
-    /// </returns>
     public async Task<int> GetCountAsync(TUserKey? userId = default)
     {
-        var query = GetQuery(userId);
-        return await query.CountAsync();
+        return await GetQuery(userId).CountAsync();
     }
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    /// <param name="id">The identifier of the entity to check.</param>
-    /// <param name="userId">The optional user identifier used to scope the query.</param>
-    /// <returns>
-    /// A task that resolves to <see langword="true"/> when the entity exists; otherwise, <see langword="false"/>.
-    /// </returns>
     public async Task<bool> ExistsAsync(TResourceKey id, TUserKey? userId = default)
     {
-        var query = GetQuery(userId);
-        return await query.AnyAsync(e => e.Id.Equals(id));
+        return await GetQuery(userId).AnyAsync(e => e.Id.Equals(id));
     }
 
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    /// <param name="id">The identifier of the entity to retrieve.</param>
-    /// <param name="userId">The optional user identifier used to scope the query.</param>
-    /// <returns>
-    /// A task that resolves to the matching entity, or <see langword="null"/> when it is not found.
-    /// </returns>
-    public async Task<TResourceEntity?> GetByIdAsync(TResourceKey id, TUserKey? userId = default)
+    public async Task<TDomainEntity?> GetByIdAsync(TResourceKey id, TUserKey? userId = default)
     {
-        var query = GetQuery(userId);
-        var res = await query.FirstOrDefaultAsync(e => e.Id.Equals(id));
-        return res;
+        var entity = await GetQuery(userId).FirstOrDefaultAsync(e => e.Id.Equals(id));
+        return RepositoryMapper.Map(entity);
     }
 
     /// <summary>
     /// Creates a new entity instance and applies ownership and metadata when supported.
     /// </summary>
-    /// <param name="entity">The entity to create.</param>
-    /// <param name="userId">The optional user identifier used to scope or stamp the operation.</param>
-    /// <returns>
-    /// A task that resolves to the created entity, or <see langword="null"/> when creation cannot be completed.
-    /// </returns>
-    public Task<TResourceEntity?> CreateAsync(TResourceEntity entity, TUserKey? userId = default)
+    public Task<TDomainEntity?> CreateAsync(TDomainEntity entity, TUserKey? userId = default)
     {
-        if (ShouldUseUserId(userId))
+        var dbEntity = RepositoryMapper.Map(entity);
+
+        if (dbEntity == null)
         {
-            ((IBaseEntityUserId<TUserKey>)entity).UserId = userId!;
+            return Task.FromResult<TDomainEntity?>(null);
         }
 
-        ApplyCreateMetadata(entity, userId);
-        return Task.FromResult<TResourceEntity?>(RepositoryDbSet.Add(entity).Entity);
+        if (ShouldUseUserId(userId))
+        {
+            ((IBaseEntityUserId<TUserKey>)dbEntity).UserId = userId!;
+        }
+
+        ApplyCreateMetadata(dbEntity, userId);
+        var createdEntity = RepositoryDbSet.Add(dbEntity).Entity;
+        return Task.FromResult(RepositoryMapper.Map(createdEntity));
     }
 
     /// <summary>
     /// Updates an existing entity instance and applies metadata when supported.
     /// </summary>
-    /// <param name="id">The identifier of the entity to update.</param>
-    /// <param name="entity">The new entity state.</param>
-    /// <param name="userId">The optional user identifier used to scope or stamp the operation.</param>
-    /// <returns>
-    /// A task that resolves to the updated entity, or <see langword="null"/> when the entity cannot be updated.
-    /// </returns>
-    public async Task<TResourceEntity?> UpdateAsync(TResourceKey id, TResourceEntity entity, TUserKey? userId = default)
+    public async Task<TDomainEntity?> UpdateAsync(TResourceKey id, TDomainEntity entity, TUserKey? userId = default)
     {
-        var dbEntity = await RepositoryDbSet
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id.Equals(id));
+        var dbEntity = RepositoryMapper.Map(entity);
 
         if (dbEntity == null)
         {
             return null;
         }
 
+        var existingDbEntity = await RepositoryDbSet
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id.Equals(id));
+
+        if (existingDbEntity == null)
+        {
+            return null;
+        }
+
+        dbEntity.Id = id;
+
         if (ShouldUseUserId(userId))
         {
-            if (!((IBaseEntityUserId<TUserKey>)dbEntity).UserId.Equals(userId))
+            if (!((IBaseEntityUserId<TUserKey>)existingDbEntity).UserId.Equals(userId))
             {
                 return null;
             }
 
-            ((IBaseEntityUserId<TUserKey>)entity).UserId = ((IBaseEntityUserId<TUserKey>)dbEntity).UserId;
+            ((IBaseEntityUserId<TUserKey>)dbEntity).UserId = ((IBaseEntityUserId<TUserKey>)existingDbEntity).UserId;
         }
 
-        ApplyUpdateMetadata(entity, dbEntity, userId);
-        return RepositoryDbSet.Update(entity).Entity;
+        ApplyUpdateMetadata(dbEntity, existingDbEntity, userId);
+        var updatedEntity = RepositoryDbSet.Update(dbEntity).Entity;
+        return RepositoryMapper.Map(updatedEntity);
     }
 
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
-    /// <param name="id">The identifier of the entity to remove.</param>
-    /// <param name="userId">The optional user identifier used to scope the operation.</param>
-    /// <returns>
-    /// A task that resolves to <see langword="true"/> when the entity was removed; otherwise, <see langword="false"/>.
-    /// </returns>
     public async Task<bool> RemoveAsync(TResourceKey id, TUserKey? userId = default)
     {
-        var query = GetQuery(userId, asTracking: true);
-        query = query.Where(e => e.Id.Equals(id));
+        var query = GetQuery(userId, asTracking: true).Where(e => e.Id.Equals(id));
         var dbEntity = await query.FirstOrDefaultAsync();
 
         if (dbEntity == null)

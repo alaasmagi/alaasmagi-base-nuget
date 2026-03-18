@@ -64,7 +64,7 @@ public class MethodResponse<TValue> : IMethodResponse<TValue>
 }
 
 /// <summary>
-/// Provides a concrete method response implementation with a custom error type.
+/// Provides a concrete method response implementation that exposes a custom error interface type.
 /// </summary>
 /// <typeparam name="TValue">The type of the successful return value.</typeparam>
 /// <typeparam name="TError">The type of the error payload.</typeparam>
@@ -84,6 +84,7 @@ public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
 
     /// <summary>
     /// Gets the error payload when <see cref="Successful"/> is <see langword="false"/>.
+    /// The value is populated only when the provided error implements <typeparamref name="TError"/>.
     /// </summary>
     public TError? Error { get; }
 
@@ -121,7 +122,7 @@ public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
     /// </summary>
     /// <param name="error">The error payload describing the failure.</param>
     /// <returns>
-    /// A failed <see cref="MethodResponse{TValue, TError}"/> containing the provided error.
+    /// A failed <see cref="MethodResponse{TValue, TError}"/> whose <see cref="Error"/> value is set when the provided error implements <typeparamref name="TError"/>.
     /// </returns>
     public static MethodResponse<TValue, TError> Failure(IError error) => new(error);
 }

@@ -1,5 +1,3 @@
-using Base.Contracts.Domain;
-
 namespace Base.Contracts.DTO;
 
 /// <summary>
@@ -32,7 +30,16 @@ public interface IMapper<TUpperEntity, TLowerEntity, TKey>
     /// The mapped upper-layer entity, or <see langword="null"/> when the source entity is <see langword="null"/> or cannot be mapped.
     /// </returns>
     public TUpperEntity? Map(TLowerEntity? entity);
-
+    
+    /// <summary>
+    /// Maps lower-layer entities to upper-layer entities.
+    /// </summary>
+    /// <param name="entities">The collection of lower-layer entities to map.</param>
+    /// <returns>
+    /// The mapped upper-layer entities, or <see langword="null"/> when the source entities are <see langword="null"/> or cannot be mapped.
+    /// </returns>
+    public IEnumerable<TUpperEntity>? Map(IEnumerable<TLowerEntity>? entities);
+    
     /// <summary>
     /// Maps an upper-layer entity to a lower-layer entity.
     /// </summary>
@@ -41,4 +48,13 @@ public interface IMapper<TUpperEntity, TLowerEntity, TKey>
     /// The mapped lower-layer entity, or <see langword="null"/> when the source entity is <see langword="null"/> or cannot be mapped.
     /// </returns>
     public TLowerEntity? Map(TUpperEntity? entity);
+    
+    /// <summary>
+    /// Maps upper-layer entities to lower-layer entities.
+    /// </summary>
+    /// <param name="entities">The collection of upper-layer entities to map.</param>
+    /// <returns>
+    /// The mapped lower-layer entities, or <see langword="null"/> when the source entities are <see langword="null"/> or cannot be mapped.
+    /// </returns>
+    public IEnumerable<TLowerEntity>? Map(IEnumerable<TUpperEntity>? entities);
 }

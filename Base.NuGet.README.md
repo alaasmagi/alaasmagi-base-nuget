@@ -32,23 +32,65 @@ These packages help standardize repetitive application code such as:
 A common setup looks like this:
 
 1. Define your domain entity by inheriting from one of the `Base.Domain` classes.
-2. Implement a mapper between your application model and persistence model.
-3. Inherit from `BaseRepository<...>` or `BaseRepositorySoftDelete<...>`.
-4. Inherit from `BaseService<...>` or `BaseServiceSoftDelete<...>`.
-5. Use the contracts from `Base.Contracts.*` at your application boundaries.
+2. Implement a mapper between your domain model and persistence model for the repository layer.
+3. If your application layer uses separate DTOs or models, implement a second mapper between the application model and the domain model for the service layer.
+4. Inherit from `BaseRepository<...>` or `BaseRepositorySoftDelete<...>`.
+5. Inherit from `BaseService<...>` or `BaseServiceSoftDelete<...>`.
+6. Use the contracts from `Base.Contracts.*` at your application boundaries.
 
 ## Example
 
 ```csharp
-public class TodoEntity : BaseEntityWithMetaSoftDelete<Guid>
+public class Todo : BaseEntityWithMetaSoftDelete<Guid>
 {
     public string Title { get; set; } = default!;
 }
 
-public class TodoRepository
-    : BaseRepositorySoftDelete<TodoEntity, Guid, Guid>
+public class TodoDbEntity : BaseEntityWithMetaSoftDelete<Guid>
 {
-    public TodoRepository(AppDbContext dbContext) : base(dbContext)
+    public string Title { get; set; } = default!;
+}
+
+public class TodoMapper : IMapper<Todo, TodoDbEntity, Guid>
+{
+    public Todo? Map(TodoDbEntity? entity) => entity == null
+        ? null
+        : new Todo
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            CreatedAt = entity.CreatedAt,
+            CreatedBy = entity.CreatedBy,
+            UpdatedAt = entity.UpdatedAt,
+            UpdatedBy = entity.UpdatedBy,
+            IsDeleted = entity.IsDeleted
+        };
+
+    public IEnumerable<Todo>? Map(IEnumerable<TodoDbEntity>? entities) =>
+        entities?.Select(Map)!;
+
+    public TodoDbEntity? Map(Todo? entity) => entity == null
+        ? null
+        : new TodoDbEntity
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            CreatedAt = entity.CreatedAt,
+            CreatedBy = entity.CreatedBy,
+            UpdatedAt = entity.UpdatedAt,
+            UpdatedBy = entity.UpdatedBy,
+            IsDeleted = entity.IsDeleted
+        };
+
+    public IEnumerable<TodoDbEntity>? Map(IEnumerable<Todo>? entities) =>
+        entities?.Select(Map)!;
+}
+
+public class TodoRepository
+    : BaseRepositorySoftDelete<Todo, TodoDbEntity, TodoMapper, Guid, Guid>
+{
+    public TodoRepository(AppDbContext dbContext, TodoMapper mapper)
+        : base(dbContext, mapper)
     {
     }
 }
@@ -63,6 +105,9 @@ These packages currently target:
 Some packages also depend on:
 
 - `Microsoft.EntityFrameworkCore`
+- `Microsoft.Extensions.Caching.StackExchangeRedis` in `alaasmagi.Base.Domain`
+- `Sentry` in `alaasmagi.Base.Domain`
+- `Sentry.AspNetCore` in `alaasmagi.Base.Domain`
 
 ## Notes
 
@@ -70,3 +115,5 @@ Some packages also depend on:
 - Package versions should be kept in sync across the full `alaasmagi.Base.*` set.
 - `Base.DataAccess.EF` is intended for EF Core-based persistence.
 - `Base.Application` builds on repository and mapper abstractions from the contracts packages.
+- Metadata timestamps are populated automatically by the EF repository base classes when the entity type implements `IBaseEntityMeta`.
+- Metadata user identifiers are populated when a non-default `userId` is supplied to repository methods.
