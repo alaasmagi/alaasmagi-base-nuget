@@ -5,6 +5,17 @@ using Base.Contracts.DTO;
 
 namespace Base.Application;
 
+public class BaseService<TEntity, TDomainEntity, TRepository> : BaseService<TEntity, TDomainEntity, TRepository, Guid, Guid>
+    where TEntity : class
+    where TDomainEntity : class, IBaseEntity<Guid>
+    where TRepository : class, IBaseRepository<TDomainEntity, Guid, Guid>
+{
+    public BaseService(IBaseUow serviceUow, TRepository serviceRepository, IMapper<TEntity, TDomainEntity, Guid> serviceMapper) : 
+        base(serviceUow, serviceRepository, serviceMapper)
+    {
+    }
+}
+
 /// <summary>
 /// Provides a reusable base implementation for application services that map between application-layer entities and repository entities.
 /// </summary>

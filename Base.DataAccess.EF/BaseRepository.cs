@@ -5,6 +5,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Base.DataAccess.EF;
 
+public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper> : BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, Guid, Guid>
+    where TDomainEntity : class, IBaseEntity<Guid>
+    where TDataAccessEntity : class, IBaseEntity<Guid>
+    where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, Guid>
+{
+    public BaseRepository(DbContext repositoryDbContext, TMapper repositoryMapper)
+        : base(repositoryDbContext, repositoryMapper)
+    {
+    }
+}
+
 /// <summary>
 /// Provides a reusable Entity Framework repository implementation that maps between domain and database entities.
 /// </summary>

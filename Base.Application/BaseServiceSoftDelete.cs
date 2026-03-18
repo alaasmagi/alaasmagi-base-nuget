@@ -5,6 +5,18 @@ using Base.Contracts.DTO;
 
 namespace Base.Application;
 
+public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository> 
+    : BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, Guid, Guid>
+        where TEntity : class
+        where TDomainEntity : class, IBaseEntity<Guid>, IBaseEntitySoftDelete
+        where TRepository : class, IBaseRepositorySoftDelete<TDomainEntity, Guid, Guid>
+{
+    public BaseServiceSoftDelete(IBaseUow serviceUow, TRepository serviceRepository, IMapper<TEntity, TDomainEntity, Guid> serviceMapper) 
+        : base(serviceUow, serviceRepository, serviceMapper)
+    {
+    }
+}
+
 /// <summary>
 /// Provides a reusable base implementation for application services that support soft-delete operations.
 /// </summary>

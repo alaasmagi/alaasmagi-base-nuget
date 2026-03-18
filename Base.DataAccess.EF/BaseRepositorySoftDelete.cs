@@ -5,6 +5,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Base.DataAccess.EF;
 
+public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper> :
+    BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper, Guid, Guid>
+    where TDomainEntity : class, IBaseEntity<Guid>, IBaseEntitySoftDelete
+    where TDataAccessEntity : class, IBaseEntity<Guid>, IBaseEntitySoftDelete
+    where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, Guid>
+{
+    public BaseRepositorySoftDelete(DbContext repositoryDbContext, TMapper repositoryMapper) : base(repositoryDbContext, repositoryMapper)
+    {
+    }
+}
+
 /// <summary>
 /// Provides a reusable Entity Framework repository implementation for entities that support soft delete.
 /// </summary>
