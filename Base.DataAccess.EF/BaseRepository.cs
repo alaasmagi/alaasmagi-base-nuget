@@ -7,7 +7,7 @@ namespace Base.DataAccess.EF;
 
 public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper> : BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, Guid, Guid>
     where TDomainEntity : class, IBaseEntity<Guid>
-    where TDataAccessEntity : class, IBaseEntity<Guid>
+    where TDataAccessEntity : class, IBaseEntityWithMeta<Guid>
     where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, Guid>
 {
     public BaseRepository(DbContext repositoryDbContext, TMapper repositoryMapper)
@@ -26,7 +26,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper> : BaseRep
 /// <typeparam name="TUserKey">The identifier type of the current user or owner.</typeparam>
 public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TUserKey> : IBaseRepository<TDomainEntity, TResourceKey, TUserKey>
     where TDomainEntity : class, IBaseEntity<TResourceKey>
-    where TDataAccessEntity : class, IBaseEntity<TResourceKey>
+    where TDataAccessEntity : class, IBaseEntityWithMeta<TResourceKey>
     where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, TResourceKey>
     where TResourceKey : IEquatable<TResourceKey>
     where TUserKey : IEquatable<TUserKey>
@@ -137,7 +137,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     {
         if (userId == null || EqualityComparer<TUserKey>.Default.Equals(userId, default!))
         {
-            return null;
+            return string.Empty;
         }
 
         return userId.ToString();

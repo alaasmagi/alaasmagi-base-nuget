@@ -11,7 +11,7 @@ public interface IBaseEntityWithMetaSoftDelete : IBaseEntityWithMetaSoftDelete<G
 /// Defines an entity contract that combines an identifier, metadata, and soft-delete support.
 /// </summary>
 /// <typeparam name="TKey">The identifier type of the entity.</typeparam>
-public interface IBaseEntityWithMetaSoftDelete<TKey> : IBaseEntity<TKey>, IBaseEntityMeta, IBaseEntitySoftDelete
+public interface IBaseEntityWithMetaSoftDelete<TKey> : IBaseEntityWithMeta<TKey>, IBaseEntitySoftDelete
     where TKey : IEquatable<TKey>
 {
 }

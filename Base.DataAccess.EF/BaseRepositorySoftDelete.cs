@@ -8,7 +8,7 @@ namespace Base.DataAccess.EF;
 public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper> :
     BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper, Guid, Guid>
     where TDomainEntity : class, IBaseEntity<Guid>, IBaseEntitySoftDelete
-    where TDataAccessEntity : class, IBaseEntity<Guid>, IBaseEntitySoftDelete
+    where TDataAccessEntity : class, IBaseEntityWithMetaSoftDelete<Guid>, IBaseEntitySoftDelete
     where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, Guid>
 {
     public BaseRepositorySoftDelete(DbContext repositoryDbContext, TMapper repositoryMapper) : base(repositoryDbContext, repositoryMapper)
@@ -28,7 +28,7 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TUserKey>,
     IBaseRepositorySoftDelete<TDomainEntity, TResourceKey, TUserKey>
     where TDomainEntity : class, IBaseEntity<TResourceKey>, IBaseEntitySoftDelete
-    where TDataAccessEntity : class, IBaseEntity<TResourceKey>, IBaseEntitySoftDelete
+    where TDataAccessEntity : class, IBaseEntityWithMetaSoftDelete<TResourceKey>, IBaseEntitySoftDelete
     where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, TResourceKey>
     where TResourceKey : IEquatable<TResourceKey>
     where TUserKey : IEquatable<TUserKey>
