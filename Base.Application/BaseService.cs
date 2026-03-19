@@ -23,13 +23,13 @@ public class BaseService<TEntity, TDomainEntity, TRepository> : BaseService<TEnt
 /// <typeparam name="TDomainEntity">The repository/domain entity type used for persistence.</typeparam>
 /// <typeparam name="TRepository">The repository type used to access persisted entities.</typeparam>
 /// <typeparam name="TKey">The identifier type of the entity.</typeparam>
-/// <typeparam name="TUserKey">The identifier type of the current user or owner.</typeparam>
-public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : IBaseService<TEntity, TKey, TUserKey>
+/// <typeparam name="TActor">The identifier type of the actor used to scope or stamp service operations.</typeparam>
+public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IBaseService<TEntity, TKey, TActor>
     where TEntity : class
     where TDomainEntity : class, IBaseEntity<TKey>
-    where TRepository : class, IBaseRepository<TDomainEntity, TKey, TUserKey>
+    where TRepository : class, IBaseRepository<TDomainEntity, TKey, TActor>
     where TKey : IEquatable<TKey>
-    where TUserKey : IEquatable<TUserKey>
+    where TActor : IEquatable<TActor>
 {
     /// <summary>
     /// Stores the unit of work used to persist service-level changes.
@@ -47,7 +47,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : 
     protected readonly IMapper<TEntity, TDomainEntity, TKey> ServiceMapper;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BaseService{TEntity, TDomainEntity, TRepository, TKey, TUserKey}"/> class.
+    /// Initializes a new instance of the <see cref="BaseService{TEntity, TDomainEntity, TRepository, TKey, TActor}"/> class.
     /// </summary>
     /// <param name="serviceUow">The unit of work used to persist changes.</param>
     /// <param name="serviceRepository">The repository used to access entities.</param>
@@ -63,52 +63,52 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : 
     }
 
     /// <summary>
-    /// Retrieves all entities visible to the specified user.
+    /// Retrieves all entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TEntity>?> GetAllAsync(TUserKey? userId = default)
+    public async Task<IEnumerable<TEntity>?> GetAllAsync(TActor? actor = default)
     {
-        var domainEntities = await ServiceRepository.GetAllAsync(userId);
+        var domainEntities = await ServiceRepository.GetAllAsync(actor);
         return ServiceMapper.Map(domainEntities);
     }
 
     /// <summary>
-    /// Retrieves a page of entities visible to the specified user.
+    /// Retrieves a single page of entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TUserKey? userId = default)
+    public async Task<IEnumerable<TEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
-        var domainEntities = await ServiceRepository.GetAllByPageAsync(pageNr, pageSize, userId);
+        var domainEntities = await ServiceRepository.GetAllByPageAsync(pageNr, pageSize, actor);
         return ServiceMapper.Map(domainEntities);
     }
 
     /// <summary>
-    /// Counts the entities visible to the specified user.
+    /// Counts all entities visible to the specified actor.
     /// </summary>
-    public async Task<int> GetCountAsync(TUserKey? userId = default)
+    public async Task<int> GetCountAsync(TActor? actor = default)
     {
-        return await ServiceRepository.GetCountAsync(userId);
+        return await ServiceRepository.GetCountAsync(actor);
     }
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    public async Task<bool> ExistsAsync(TKey id, TUserKey? userId = default)
+    public async Task<bool> ExistsAsync(TKey id, TActor? actor = default)
     {
-        return await ServiceRepository.ExistsAsync(id, userId);
+        return await ServiceRepository.ExistsAsync(id, actor);
     }
 
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    public async Task<TEntity?> GetByIdAsync(TKey id, TUserKey? userId = default)
+    public async Task<TEntity?> GetByIdAsync(TKey id, TActor? actor = default)
     {
-        var domainEntity = await ServiceRepository.GetByIdAsync(id, userId);
+        var domainEntity = await ServiceRepository.GetByIdAsync(id, actor);
         return ServiceMapper.Map(domainEntity);
     }
 
     /// <summary>
-    /// Creates a new entity and persists the change.
+    /// Creates a new entity instance.
     /// </summary>
-    public async Task<TEntity?> CreateAsync(TEntity entity, TUserKey? userId = default)
+    public async Task<TEntity?> CreateAsync(TEntity entity, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
@@ -117,7 +117,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : 
             return null;
         }
 
-        var createdDomainEntity = await ServiceRepository.CreateAsync(domainEntity, userId);
+        var createdDomainEntity = await ServiceRepository.CreateAsync(domainEntity, actor);
 
         if (createdDomainEntity == null)
         {
@@ -129,9 +129,9 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : 
     }
 
     /// <summary>
-    /// Updates an existing entity and persists the change.
+    /// Updates an existing entity instance.
     /// </summary>
-    public async Task<TEntity?> UpdateAsync(TKey id, TEntity entity, TUserKey? userId = default)
+    public async Task<TEntity?> UpdateAsync(TKey id, TEntity entity, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
@@ -140,7 +140,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : 
             return null;
         }
 
-        var updatedDomainEntity = await ServiceRepository.UpdateAsync(id, domainEntity, userId);
+        var updatedDomainEntity = await ServiceRepository.UpdateAsync(id, domainEntity, actor);
 
         if (updatedDomainEntity == null)
         {
@@ -152,11 +152,11 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TUserKey> : 
     }
 
     /// <summary>
-    /// Removes an entity by its identifier and persists the change.
+    /// Removes an entity by its identifier.
     /// </summary>
-    public async Task<bool> RemoveAsync(TKey id, TUserKey? userId = default)
+    public async Task<bool> RemoveAsync(TKey id, TActor? actor = default)
     {
-        var removed = await ServiceRepository.RemoveAsync(id, userId);
+        var removed = await ServiceRepository.RemoveAsync(id, actor);
 
         if (!removed)
         {

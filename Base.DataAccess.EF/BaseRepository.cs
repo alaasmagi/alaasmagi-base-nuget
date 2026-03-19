@@ -23,13 +23,13 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper> : BaseRep
 /// <typeparam name="TDataAccessEntity">The database entity type persisted by Entity Framework.</typeparam>
 /// <typeparam name="TMapper">The mapper used to translate between domain and database entities.</typeparam>
 /// <typeparam name="TResourceKey">The identifier type of the entity.</typeparam>
-/// <typeparam name="TUserKey">The identifier type of the current user or owner.</typeparam>
-public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TUserKey> : IBaseRepository<TDomainEntity, TResourceKey, TUserKey>
+/// <typeparam name="TActor">The identifier type of the actor used to scope or stamp repository operations.</typeparam>
+public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TActor> : IBaseRepository<TDomainEntity, TResourceKey, TActor>
     where TDomainEntity : class, IBaseEntity<TResourceKey>
     where TDataAccessEntity : class, IBaseEntity<TResourceKey>
     where TMapper : class, IMapper<TDomainEntity, TDataAccessEntity, TResourceKey>
     where TResourceKey : IEquatable<TResourceKey>
-    where TUserKey : IEquatable<TUserKey>
+    where TActor : IEquatable<TActor>
 {
     /// <summary>
     /// Stores the database context used by the repository.
@@ -47,7 +47,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     protected readonly DbSet<TDataAccessEntity> RepositoryDbSet;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BaseRepository{TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TUserKey}"/> class.
+    /// Initializes a new instance of the <see cref="BaseRepository{TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TActor}"/> class.
     /// </summary>
     /// <param name="repositoryDbContext">The database context used by the repository.</param>
     /// <param name="repositoryMapper">The mapper used to translate between entity representations.</param>
@@ -61,12 +61,12 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Builds the base query for the repository while optionally filtering by user ownership and tracking mode.
     /// </summary>
-    /// <param name="userId">The optional user identifier used to scope the query.</param>
+    /// <param name="actor">The optional actor used to scope the query.</param>
     /// <param name="asTracking">Controls whether Entity Framework change tracking is enabled for the query.</param>
     /// <returns>
     /// An <see cref="IQueryable{T}"/> representing the base query for the repository.
     /// </returns>
-    protected virtual IQueryable<TDataAccessEntity> GetQuery(TUserKey? userId = default!, bool asTracking = false)
+    protected virtual IQueryable<TDataAccessEntity> GetQuery(TActor? actor = default!, bool asTracking = false)
     {
         var query = RepositoryDbSet.AsQueryable();
 
@@ -75,9 +75,9 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
             query = query.AsNoTracking();
         }
 
-        if (ShouldUseUserId(userId))
+        if (ShouldUseUserId(actor))
         {
-            query = query.Where(e => ((IBaseEntityUserId<TUserKey>)e).UserId.Equals(userId));
+            query = query.Where(e => ((IBaseEntityUserId<TActor>)e).UserId.Equals(actor));
         }
 
         return query;
@@ -104,15 +104,15 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Determines whether the entity type supports user scoping and a non-default user identifier was provided.
     /// </summary>
-    /// <param name="userId">The optional user identifier used to scope the query or command.</param>
+    /// <param name="actor">The optional actor value used to determine whether user-based scoping should be applied.</param>
     /// <returns>
     /// <see langword="true"/> when user scoping should be applied; otherwise, <see langword="false"/>.
     /// </returns>
-    private bool ShouldUseUserId(TUserKey? userId = default!)
+    private bool ShouldUseUserId(TActor? actor = default!)
     {
-        return typeof(IBaseEntityUserId<TUserKey>).IsAssignableFrom(typeof(TDataAccessEntity)) &&
-               userId != null &&
-               !EqualityComparer<TUserKey>.Default.Equals(userId, default);
+        return typeof(IBaseEntityUserId<TActor>).IsAssignableFrom(typeof(TDataAccessEntity)) &&
+               actor != null &&
+               !EqualityComparer<TActor>.Default.Equals(actor, default);
     }
 
     /// <summary>
@@ -127,26 +127,26 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     }
 
     /// <summary>
-    /// Converts a user identifier to its string representation for metadata fields.
+    /// Converts an actor value to its string representation for metadata fields.
     /// </summary>
-    /// <param name="userId">The optional user identifier to convert.</param>
+    /// <param name="actor">The optional actor value to convert.</param>
     /// <returns>
-    /// The string representation of the user identifier, or <see langword="null"/> when the identifier is not set.
+    /// The string representation of the actor value, or <see langword="null"/> when the value is not set.
     /// </returns>
-    private static string? GetUserIdentifier(TUserKey? userId = default!)
+    private static string? GetActorIdentifier(TActor? actor = default!)
     {
-        if (userId == null || EqualityComparer<TUserKey>.Default.Equals(userId, default!))
+        if (actor == null || EqualityComparer<TActor>.Default.Equals(actor, default!))
         {
             return string.Empty;
         }
 
-        return userId.ToString();
+        return actor.ToString();
     }
 
     /// <summary>
     /// Applies creation metadata to an entity when the entity type supports metadata fields.
     /// </summary>
-    protected virtual void ApplyCreateMetadata(TDataAccessEntity entity, TUserKey? userId = default!)
+    protected virtual void ApplyCreateMetadata(TDataAccessEntity entity, TActor? actor = default!)
     {
         if (!HasMeta())
         {
@@ -154,23 +154,23 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         }
 
         var now = DateTime.UtcNow;
-        var userIdentifier = GetUserIdentifier(userId);
+        var actorIdentifier = GetActorIdentifier(actor);
         var metaEntity = (IBaseEntityMeta)entity;
 
         metaEntity.CreatedAt = now;
         metaEntity.UpdatedAt = now;
 
-        if (userIdentifier != null)
+        if (actorIdentifier != null)
         {
-            metaEntity.CreatedBy = userIdentifier;
-            metaEntity.UpdatedBy = userIdentifier;
+            metaEntity.CreatedBy = actorIdentifier;
+            metaEntity.UpdatedBy = actorIdentifier;
         }
     }
 
     /// <summary>
     /// Applies update metadata to an entity while preserving the original creation metadata.
     /// </summary>
-    protected virtual void ApplyUpdateMetadata(TDataAccessEntity entity, TDataAccessEntity existingEntity, TUserKey? userId = default!)
+    protected virtual void ApplyUpdateMetadata(TDataAccessEntity entity, TDataAccessEntity existingEntity, TActor? actor = default!)
     {
         if (!HasMeta())
         {
@@ -178,7 +178,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         }
 
         var now = DateTime.UtcNow;
-        var userIdentifier = GetUserIdentifier(userId);
+        var actorIdentifier = GetActorIdentifier(actor);
         var metaEntity = (IBaseEntityMeta)entity;
         var existingMetaEntity = (IBaseEntityMeta)existingEntity;
 
@@ -186,9 +186,9 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         metaEntity.CreatedBy = existingMetaEntity.CreatedBy;
         metaEntity.UpdatedAt = now;
 
-        if (userIdentifier != string.Empty && userIdentifier != null)
+        if (actorIdentifier != string.Empty && actorIdentifier != null)
         {
-            metaEntity.UpdatedBy = userIdentifier;
+            metaEntity.UpdatedBy = actorIdentifier;
         }
         else
         {
@@ -199,40 +199,40 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Applies modification metadata to an entity when the entity type supports metadata fields.
     /// </summary>
-    protected void ApplyModificationMetadata(TDataAccessEntity entity, TUserKey? userId = default!)
+    protected void ApplyModificationMetadata(TDataAccessEntity entity, TActor? actor = default!)
     {
         if (!HasMeta())
         {
             return;
         }
 
-        var userIdentifier = GetUserIdentifier(userId);
+        var actorIdentifier = GetActorIdentifier(actor);
         var metaEntity = (IBaseEntityMeta)entity;
         metaEntity.UpdatedAt = DateTime.UtcNow;
 
-        if (!string.IsNullOrWhiteSpace(userIdentifier))
+        if (!string.IsNullOrWhiteSpace(actorIdentifier))
         {
-            metaEntity.UpdatedBy = userIdentifier;
+            metaEntity.UpdatedBy = actorIdentifier;
         }
     }
 
     /// <summary>
-    /// Retrieves all entities visible to the specified user.
+    /// Retrieves all entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TDomainEntity>?> GetAllAsync(TUserKey? userId = default)
+    public async Task<IEnumerable<TDomainEntity>?> GetAllAsync(TActor? actor = default)
     {
-        var entities = await GetQuery(userId).ToListAsync();
+        var entities = await GetQuery(actor).ToListAsync();
         return RepositoryMapper.Map(entities);
     }
 
     /// <summary>
-    /// Retrieves a page of entities visible to the specified user.
+    /// Retrieves a single page of entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TDomainEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TUserKey? userId = default)
+    public async Task<IEnumerable<TDomainEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
         ValidatePaging(pageNr, pageSize);
 
-        var entities = await GetQuery(userId)
+        var entities = await GetQuery(actor)
             .Skip((pageNr - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -241,34 +241,34 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     }
 
     /// <summary>
-    /// Counts the entities visible to the specified user.
+    /// Counts all entities visible to the specified actor.
     /// </summary>
-    public async Task<int> GetCountAsync(TUserKey? userId = default)
+    public async Task<int> GetCountAsync(TActor? actor = default)
     {
-        return await GetQuery(userId).CountAsync();
+        return await GetQuery(actor).CountAsync();
     }
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    public async Task<bool> ExistsAsync(TResourceKey id, TUserKey? userId = default)
+    public async Task<bool> ExistsAsync(TResourceKey id, TActor? actor = default)
     {
-        return await GetQuery(userId).AnyAsync(e => e.Id.Equals(id));
+        return await GetQuery(actor).AnyAsync(e => e.Id.Equals(id));
     }
 
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    public async Task<TDomainEntity?> GetByIdAsync(TResourceKey id, TUserKey? userId = default)
+    public async Task<TDomainEntity?> GetByIdAsync(TResourceKey id, TActor? actor = default)
     {
-        var entity = await GetQuery(userId).FirstOrDefaultAsync(e => e.Id.Equals(id));
+        var entity = await GetQuery(actor).FirstOrDefaultAsync(e => e.Id.Equals(id));
         return RepositoryMapper.Map(entity);
     }
 
     /// <summary>
     /// Creates a new entity instance and applies ownership and metadata when supported.
     /// </summary>
-    public Task<TDomainEntity?> CreateAsync(TDomainEntity entity, TUserKey? userId = default)
+    public Task<TDomainEntity?> CreateAsync(TDomainEntity entity, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
@@ -277,12 +277,12 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
             return Task.FromResult<TDomainEntity?>(null);
         }
 
-        if (ShouldUseUserId(userId))
+        if (ShouldUseUserId(actor))
         {
-            ((IBaseEntityUserId<TUserKey>)dbEntity).UserId = userId!;
+            ((IBaseEntityUserId<TActor>)dbEntity).UserId = actor!;
         }
 
-        ApplyCreateMetadata(dbEntity, userId);
+        ApplyCreateMetadata(dbEntity, actor);
         var createdEntity = RepositoryDbSet.Add(dbEntity).Entity;
         return Task.FromResult(RepositoryMapper.Map(createdEntity));
     }
@@ -290,7 +290,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Updates an existing entity instance and applies metadata when supported.
     /// </summary>
-    public async Task<TDomainEntity?> UpdateAsync(TResourceKey id, TDomainEntity entity, TUserKey? userId = default)
+    public async Task<TDomainEntity?> UpdateAsync(TResourceKey id, TDomainEntity entity, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
@@ -310,17 +310,17 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
 
         dbEntity.Id = id;
 
-        if (ShouldUseUserId(userId))
+        if (ShouldUseUserId(actor))
         {
-            if (!((IBaseEntityUserId<TUserKey>)existingDbEntity).UserId.Equals(userId))
+            if (!((IBaseEntityUserId<TActor>)existingDbEntity).UserId.Equals(actor))
             {
                 return null;
             }
 
-            ((IBaseEntityUserId<TUserKey>)dbEntity).UserId = ((IBaseEntityUserId<TUserKey>)existingDbEntity).UserId;
+            ((IBaseEntityUserId<TActor>)dbEntity).UserId = ((IBaseEntityUserId<TActor>)existingDbEntity).UserId;
         }
 
-        ApplyUpdateMetadata(dbEntity, existingDbEntity, userId);
+        ApplyUpdateMetadata(dbEntity, existingDbEntity, actor);
         var updatedEntity = RepositoryDbSet.Update(dbEntity).Entity;
         return RepositoryMapper.Map(updatedEntity);
     }
@@ -328,9 +328,9 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
-    public async Task<bool> RemoveAsync(TResourceKey id, TUserKey? userId = default)
+    public async Task<bool> RemoveAsync(TResourceKey id, TActor? actor = default)
     {
-        var query = GetQuery(userId, asTracking: true).Where(e => e.Id.Equals(id));
+        var query = GetQuery(actor, asTracking: true).Where(e => e.Id.Equals(id));
         var dbEntity = await query.FirstOrDefaultAsync();
 
         if (dbEntity == null)
