@@ -1,3 +1,5 @@
+using Base.Contracts.DTO;
+
 namespace Base.Contracts.DataAccess;
 
 /// <summary>
@@ -25,9 +27,9 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// </summary>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the matching entities, or <see langword="null"/> when no result set is available.
+    /// A task that resolves to the operation result containing either the matching entities or an error.
     /// </returns>
-    Task<IEnumerable<TEntity>?> GetAllAsync(TActor? actor = default!);
+    Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(TActor? actor = default!);
 
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor.
@@ -36,18 +38,18 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// <param name="pageSize">The number of items to include in the page.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the matching entities for the requested page, or <see langword="null"/> when no result set is available.
+    /// A task that resolves to the operation result containing either the matching page of entities or an error.
     /// </returns>
-    Task<IEnumerable<TEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default!);
+    Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default!);
 
     /// <summary>
     /// Counts all entities visible to the specified actor.
     /// </summary>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the number of matching entities.
+    /// A task that resolves to the operation result containing either the number of matching entities or an error.
     /// </returns>
-    Task<int> GetCountAsync(TActor? actor = default!);
+    Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default!);
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
@@ -55,9 +57,9 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// <param name="id">The identifier of the entity to check.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to <see langword="true"/> when the entity exists; otherwise, <see langword="false"/>.
+    /// A task that resolves to the operation result containing either the existence flag or an error.
     /// </returns>
-    Task<bool> ExistsAsync(TResourceKey id, TActor? actor = default!);
+    Task<IMethodResponse<bool>> ExistsAsync(TResourceKey id, TActor? actor = default!);
 
     /// <summary>
     /// Retrieves an entity by its identifier.
@@ -65,9 +67,9 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// <param name="id">The identifier of the entity to retrieve.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the matching entity, or <see langword="null"/> when it is not found.
+    /// A task that resolves to the operation result containing either the matching entity or an error.
     /// </returns>
-    Task<TEntity?> GetByIdAsync(TResourceKey id, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> GetByIdAsync(TResourceKey id, TActor? actor = default!);
 
     /// <summary>
     /// Creates a new entity instance.
@@ -75,9 +77,9 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// <param name="entity">The entity to create.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
-    /// A task that resolves to the created entity, or <see langword="null"/> when creation cannot be completed.
+    /// A task that resolves to the operation result containing either the created entity or an error.
     /// </returns>
-    Task<TEntity?> CreateAsync(TEntity entity, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> CreateAsync(TEntity entity, TActor? actor = default!);
 
     /// <summary>
     /// Updates an existing entity instance.
@@ -86,9 +88,9 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// <param name="entity">The new entity state.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
-    /// A task that resolves to the updated entity, or <see langword="null"/> when the entity cannot be updated.
+    /// A task that resolves to the operation result containing either the updated entity or an error.
     /// </returns>
-    Task<TEntity?> UpdateAsync(TResourceKey id, TEntity entity, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> UpdateAsync(TResourceKey id, TEntity entity, TActor? actor = default!);
 
     /// <summary>
     /// Removes an entity by its identifier.
@@ -96,7 +98,7 @@ public interface IBaseRepository<TEntity, TResourceKey, TActor>
     /// <param name="id">The identifier of the entity to remove.</param>
     /// <param name="actor">The optional actor used to scope the operation.</param>
     /// <returns>
-    /// A task that resolves to <see langword="true"/> when the entity was removed; otherwise, <see langword="false"/>.
+    /// A task that resolves to the operation result containing either a successful removal flag or an error.
     /// </returns>
-    Task<bool> RemoveAsync(TResourceKey id, TActor? actor = default!);
+    Task<IMethodResponse<bool>> RemoveAsync(TResourceKey id, TActor? actor = default!);
 }

@@ -2,6 +2,7 @@ using Base.Contracts.Application;
 using Base.Contracts.DataAccess;
 using Base.Contracts.Domain;
 using Base.Contracts.DTO;
+using Base.DTO;
 
 namespace Base.Application;
 
@@ -31,6 +32,46 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     where TKey : IEquatable<TKey>
     where TActor : IEquatable<TActor>
 {
+    /// <summary>
+    /// Gets the default error code used when a requested entity or result cannot be found.
+    /// </summary>
+    protected virtual string NotFoundErrorCode => "NOT_FOUND";
+
+    /// <summary>
+    /// Gets the default error message used when a requested entity or result cannot be found.
+    /// </summary>
+    protected virtual string NotFoundErrorMessage => "The requested data could not be retrieved.";
+
+    /// <summary>
+    /// Gets the default error code used when entity updates fail.
+    /// </summary>
+    protected virtual string UpdatingFailureErrorCode => "UPDATING_FAILED";
+
+    /// <summary>
+    /// Gets the default error message used when entity updates fail.
+    /// </summary>
+    protected virtual string UpdatingFailureErrorMessage => "The data could not be updated.";
+
+    /// <summary>
+    /// Gets the default error code used when entity removal fails.
+    /// </summary>
+    protected virtual string RemovingFailureErrorCode => "REMOVING_FAILED";
+
+    /// <summary>
+    /// Gets the default error message used when entity removal fails.
+    /// </summary>
+    protected virtual string RemovingFailureErrorMessage => "The data could not be removed.";
+
+    /// <summary>
+    /// Gets the default error code used when entity mapping fails.
+    /// </summary>
+    protected virtual string MappingFailureErrorCode => "MAPPING_FAILED";
+
+    /// <summary>
+    /// Gets the default error message used when entity mapping fails.
+    /// </summary>
+    protected virtual string MappingFailureErrorMessage => "The data could not be mapped to the service model.";
+
     /// <summary>
     /// Stores the unit of work used to persist service-level changes.
     /// </summary>
@@ -65,105 +106,177 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Retrieves all entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TEntity>?> GetAllAsync(TActor? actor = default)
+    public async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(TActor? actor = default)
     {
-        var domainEntities = await ServiceRepository.GetAllAsync(actor);
-        return ServiceMapper.Map(domainEntities);
+        var repositoryResponse = await ServiceRepository.GetAllAsync(actor);
+
+        if (!repositoryResponse.Successful)
+        {
+            return MethodResponse<IEnumerable<TEntity>>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, "The requested entities could not be retrieved."));
+        }
+
+        var mappedEntities = ServiceMapper.Map(repositoryResponse.Value);
+
+        if (mappedEntities == null)
+        {
+            return MethodResponse<IEnumerable<TEntity>>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<IEnumerable<TEntity>>.Success(mappedEntities);
     }
 
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
+    public async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
-        var domainEntities = await ServiceRepository.GetAllByPageAsync(pageNr, pageSize, actor);
-        return ServiceMapper.Map(domainEntities);
+        var repositoryResponse = await ServiceRepository.GetAllByPageAsync(pageNr, pageSize, actor);
+
+        if (!repositoryResponse.Successful)
+        {
+            return MethodResponse<IEnumerable<TEntity>>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        var mappedEntities = ServiceMapper.Map(repositoryResponse.Value);
+
+        if (mappedEntities == null)
+        {
+            return MethodResponse<IEnumerable<TEntity>>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<IEnumerable<TEntity>>.Success(mappedEntities);
     }
 
     /// <summary>
     /// Counts all entities visible to the specified actor.
     /// </summary>
-    public async Task<int> GetCountAsync(TActor? actor = default)
+    public async Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default)
     {
-        return await ServiceRepository.GetCountAsync(actor);
+        var repositoryResponse = await ServiceRepository.GetCountAsync(actor);
+
+        if (!repositoryResponse.Successful)
+        {
+            return MethodResponse<int>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        return MethodResponse<int>.Success(repositoryResponse.Value);
     }
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    public async Task<bool> ExistsAsync(TKey id, TActor? actor = default)
+    public async Task<IMethodResponse<bool>> ExistsAsync(TKey id, TActor? actor = default)
     {
-        return await ServiceRepository.ExistsAsync(id, actor);
+        var repositoryResponse = await ServiceRepository.ExistsAsync(id, actor);
+
+        if (!repositoryResponse.Successful)
+        {
+            return MethodResponse<bool>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        return MethodResponse<bool>.Success(repositoryResponse.Value);
     }
+
+    /// <summary>
+    /// Creates a standard error payload for service-level operation failures.
+    /// </summary>
+    protected virtual IError CreateError(string code, string message) => new Error(code, message);
 
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    public async Task<TEntity?> GetByIdAsync(TKey id, TActor? actor = default)
+    public async Task<IMethodResponse<TEntity>> GetByIdAsync(TKey id, TActor? actor = default)
     {
-        var domainEntity = await ServiceRepository.GetByIdAsync(id, actor);
-        return ServiceMapper.Map(domainEntity);
+        var repositoryResponse = await ServiceRepository.GetByIdAsync(id, actor);
+
+        if (!repositoryResponse.Successful)
+        {
+            return MethodResponse<TEntity>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        var mappedEntity = ServiceMapper.Map(repositoryResponse.Value);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TEntity>.Success(mappedEntity);
     }
 
     /// <summary>
     /// Creates a new entity instance.
     /// </summary>
-    public async Task<TEntity?> CreateAsync(TEntity entity, TActor? actor = default)
+    public async Task<IMethodResponse<TEntity>> CreateAsync(TEntity entity, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
         if (domainEntity == null)
         {
-            return null;
+            return MethodResponse<TEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
         }
 
-        var createdDomainEntity = await ServiceRepository.CreateAsync(domainEntity, actor);
+        var repositoryResponse = await ServiceRepository.CreateAsync(domainEntity, actor);
 
-        if (createdDomainEntity == null)
+        if (!repositoryResponse.Successful)
         {
-            return null;
+            return MethodResponse<TEntity>.Failure(repositoryResponse.Error ?? CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
         }
 
         await ServiceUow.SaveChangesAsync();
-        return ServiceMapper.Map(createdDomainEntity);
+        var mappedEntity = ServiceMapper.Map(repositoryResponse.Value);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TEntity>.Success(mappedEntity);
     }
 
     /// <summary>
     /// Updates an existing entity instance.
     /// </summary>
-    public async Task<TEntity?> UpdateAsync(TKey id, TEntity entity, TActor? actor = default)
+    public async Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
         if (domainEntity == null)
         {
-            return null;
+            return MethodResponse<TEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
         }
 
-        var updatedDomainEntity = await ServiceRepository.UpdateAsync(id, domainEntity, actor);
+        var repositoryResponse = await ServiceRepository.UpdateAsync(id, domainEntity, actor);
 
-        if (updatedDomainEntity == null)
+        if (!repositoryResponse.Successful)
         {
-            return null;
+            return MethodResponse<TEntity>.Failure(repositoryResponse.Error ?? CreateError(UpdatingFailureErrorCode, UpdatingFailureErrorMessage));
         }
 
         await ServiceUow.SaveChangesAsync();
-        return ServiceMapper.Map(updatedDomainEntity);
+        var mappedEntity = ServiceMapper.Map(repositoryResponse.Value);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TEntity>.Success(mappedEntity);
     }
 
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
-    public async Task<bool> RemoveAsync(TKey id, TActor? actor = default)
+    public async Task<IMethodResponse<bool>> RemoveAsync(TKey id, TActor? actor = default)
     {
-        var removed = await ServiceRepository.RemoveAsync(id, actor);
+        var repositoryResponse = await ServiceRepository.RemoveAsync(id, actor);
 
-        if (!removed)
+        if (!repositoryResponse.Successful)
         {
-            return false;
+            return MethodResponse<bool>.Failure(repositoryResponse.Error ?? CreateError(RemovingFailureErrorCode, RemovingFailureErrorMessage));
         }
 
         await ServiceUow.SaveChangesAsync();
-        return true;
+        return MethodResponse<bool>.Success(true);
     }
 }

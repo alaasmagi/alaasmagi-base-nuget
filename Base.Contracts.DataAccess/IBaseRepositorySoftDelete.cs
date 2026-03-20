@@ -1,3 +1,5 @@
+using Base.Contracts.DTO;
+
 namespace Base.Contracts.DataAccess;
 
 /// <summary>
@@ -26,9 +28,9 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="includeSoftDeleted">Controls whether soft-deleted entities are included in the result.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the matching entities, or <see langword="null"/> when no result set is available.
+    /// A task that resolves to the operation result containing either the matching entities or an error.
     /// </returns>
-    Task<IEnumerable<TEntity>?> GetAllAsync(bool includeSoftDeleted = false, TActor? actor = default!);
+    Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(bool includeSoftDeleted = false, TActor? actor = default!);
 
     /// <summary>
     /// Retrieves a single page of entities while optionally including soft-deleted records.
@@ -38,9 +40,9 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="includeSoftDeleted">Controls whether soft-deleted entities are included in the result.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the matching entities for the requested page, or <see langword="null"/> when no result set is available.
+    /// A task that resolves to the operation result containing either the matching page of entities or an error.
     /// </returns>
-    Task<IEnumerable<TEntity>?> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default!);
+    Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default!);
 
     /// <summary>
     /// Counts entities while optionally including soft-deleted records.
@@ -48,9 +50,9 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="includeSoftDeleted">Controls whether soft-deleted entities are included in the count.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the number of matching entities.
+    /// A task that resolves to the operation result containing either the number of matching entities or an error.
     /// </returns>
-    Task<int> GetCountAsync(bool includeSoftDeleted = false, TActor? actor = default!);
+    Task<IMethodResponse<int>> GetCountAsync(bool includeSoftDeleted = false, TActor? actor = default!);
 
     /// <summary>
     /// Retrieves an entity by its identifier while optionally including soft-deleted records.
@@ -59,9 +61,9 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="includeSoftDeleted">Controls whether soft-deleted entities are included in the search.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to the matching entity, or <see langword="null"/> when it is not found.
+    /// A task that resolves to the operation result containing either the matching entity or an error.
     /// </returns>
-    Task<TEntity?> GetByIdAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> GetByIdAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!);
 
     /// <summary>
     /// Determines whether an entity exists while optionally including soft-deleted records.
@@ -70,9 +72,9 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="includeSoftDeleted">Controls whether soft-deleted entities are included in the search.</param>
     /// <param name="actor">The optional actor used to scope the query.</param>
     /// <returns>
-    /// A task that resolves to <see langword="true"/> when the entity exists; otherwise, <see langword="false"/>.
+    /// A task that resolves to the operation result containing either the existence flag or an error.
     /// </returns>
-    Task<bool> ExistsAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!);
+    Task<IMethodResponse<bool>> ExistsAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!);
 
     /// <summary>
     /// Marks an entity as soft deleted.
@@ -80,9 +82,9 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="id">The identifier of the entity to soft delete.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
-    /// A task that resolves to <see langword="true"/> when the entity was marked as deleted; otherwise, <see langword="false"/>.
+    /// A task that resolves to the operation result containing either a successful soft-delete flag or an error.
     /// </returns>
-    Task<bool> SoftDeleteAsync(TResourceKey id, TActor? actor = default!);
+    Task<IMethodResponse<bool>> SoftDeleteAsync(TResourceKey id, TActor? actor = default!);
 
     /// <summary>
     /// Restores a previously soft-deleted entity.
@@ -90,7 +92,7 @@ public interface IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor> : IBas
     /// <param name="id">The identifier of the entity to restore.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
-    /// A task that resolves to the restored entity, or <see langword="null"/> when the entity cannot be restored.
+    /// A task that resolves to the operation result containing either the restored entity or an error.
     /// </returns>
-    Task<TEntity?> RestoreAsync(TResourceKey id, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> RestoreAsync(TResourceKey id, TActor? actor = default!);
 }

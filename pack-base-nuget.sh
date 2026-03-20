@@ -13,6 +13,8 @@ projects=(
   "Base.DTO/Base.DTO.csproj"
   "Base.DataAccess.EF/Base.DataAccess.EF.csproj"
   "Base.Application/Base.Application.csproj"
+  "Base.Contracts.Exception/Base.Contracts.Exception.csproj"
+  "Base.Exception/Base.Exception.csproj"
 )
 
 for project in "${projects[@]}"; do

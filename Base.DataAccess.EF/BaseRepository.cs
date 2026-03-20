@@ -1,6 +1,8 @@
 using Base.Contracts.DataAccess;
 using Base.Contracts.Domain;
 using Base.Contracts.DTO;
+using Base.DTO;
+using Base.Exception;
 using Microsoft.EntityFrameworkCore;
 
 namespace Base.DataAccess.EF;
@@ -31,6 +33,47 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     where TResourceKey : IEquatable<TResourceKey>
     where TActor : IEquatable<TActor>
 {
+    /// <summary>
+    /// Gets the default error code used when a requested entity or result cannot be found.
+    /// </summary>
+    protected virtual string NotFoundErrorCode => "NOT_FOUND";
+
+    /// <summary>
+    /// Gets the default error message used when a requested entity or result cannot be found.
+    /// </summary>
+    protected virtual string NotFoundErrorMessage => "The requested data could not be retrieved.";
+    
+    /// <summary>
+    /// Gets the default error code used when entity mapping fails.
+    /// </summary>
+    protected virtual string MappingFailureErrorCode => "MAPPING_FAILED";
+
+    /// <summary>
+    /// Gets the default error message used when entity mapping fails.
+    /// </summary>
+    protected virtual string MappingFailureErrorMessage => "The data could not be mapped to the domain model.";
+    
+    /// <summary>
+    /// Gets the default error code used when an operation is forbidden.
+    /// </summary>
+    protected virtual string ForbiddenErrorCode => "FORBIDDEN";
+
+    /// <summary>
+    /// Gets the default error message used when an operation is forbidden.
+    /// </summary>
+    protected virtual string ForbiddenErrorMessage => "The requested entity is not accessible for the current actor.";
+    
+    /// <summary>
+    /// Gets the default error code used when an invalid paging parameter is provided.
+    /// </summary>
+    protected virtual string InvalidPagingErrorCode => "INVALID_PAGING";
+
+    /// <summary>
+    /// Gets the default error message used when  an invalid paging parameter is provided.
+    /// </summary>
+    protected virtual string InvalidPagingErrorMessage => "The provided paging parameters are invalid.";
+
+    
     /// <summary>
     /// Stores the database context used by the repository.
     /// </summary>
@@ -84,6 +127,11 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     }
 
     /// <summary>
+    /// Creates a standard error payload for repository-level operation failures.
+    /// </summary>
+    protected virtual IError CreateError(string code, string message) => new Error(code, message);
+
+    /// <summary>
     /// Validates paging arguments and throws when the values are out of range.
     /// </summary>
     /// <param name="pageNr">The one-based page number to validate.</param>
@@ -92,12 +140,12 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     {
         if (pageNr <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(pageNr), pageNr, "Page number must be greater than 0.");
+            throw new BaseException(InvalidPagingErrorCode, InvalidPagingErrorMessage);
         }
 
         if (pageSize <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "Page size must be greater than 0.");
+            throw new BaseException(InvalidPagingErrorCode, InvalidPagingErrorMessage);
         }
     }
 
@@ -219,16 +267,23 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Retrieves all entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TDomainEntity>?> GetAllAsync(TActor? actor = default)
+    public async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllAsync(TActor? actor = default)
     {
         var entities = await GetQuery(actor).ToListAsync();
-        return RepositoryMapper.Map(entities);
+        var mappedEntities = RepositoryMapper.Map(entities);
+
+        if (mappedEntities == null)
+        {
+            return MethodResponse<IEnumerable<TDomainEntity>>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<IEnumerable<TDomainEntity>>.Success(mappedEntities);
     }
 
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor.
     /// </summary>
-    public async Task<IEnumerable<TDomainEntity>?> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
+    public async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
         ValidatePaging(pageNr, pageSize);
 
@@ -237,44 +292,66 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
             .Take(pageSize)
             .ToListAsync();
 
-        return RepositoryMapper.Map(entities);
+        var mappedEntities = RepositoryMapper.Map(entities);
+
+        if (mappedEntities == null)
+        {
+            return MethodResponse<IEnumerable<TDomainEntity>>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<IEnumerable<TDomainEntity>>.Success(mappedEntities);
     }
 
     /// <summary>
     /// Counts all entities visible to the specified actor.
     /// </summary>
-    public async Task<int> GetCountAsync(TActor? actor = default)
+    public async Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default)
     {
-        return await GetQuery(actor).CountAsync();
+        var count = await GetQuery(actor).CountAsync();
+        return MethodResponse<int>.Success(count);
     }
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    public async Task<bool> ExistsAsync(TResourceKey id, TActor? actor = default)
+    public async Task<IMethodResponse<bool>> ExistsAsync(TResourceKey id, TActor? actor = default)
     {
-        return await GetQuery(actor).AnyAsync(e => e.Id.Equals(id));
+        var exists = await GetQuery(actor).AnyAsync(e => e.Id.Equals(id));
+        return MethodResponse<bool>.Success(exists);
     }
 
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    public async Task<TDomainEntity?> GetByIdAsync(TResourceKey id, TActor? actor = default)
+    public async Task<IMethodResponse<TDomainEntity>> GetByIdAsync(TResourceKey id, TActor? actor = default)
     {
         var entity = await GetQuery(actor).FirstOrDefaultAsync(e => e.Id.Equals(id));
-        return RepositoryMapper.Map(entity);
+
+        if (entity == null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        var mappedEntity = RepositoryMapper.Map(entity);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TDomainEntity>.Success(mappedEntity);
     }
 
     /// <summary>
     /// Creates a new entity instance and applies ownership and metadata when supported.
     /// </summary>
-    public Task<TDomainEntity?> CreateAsync(TDomainEntity entity, TActor? actor = default)
+    public Task<IMethodResponse<TDomainEntity>> CreateAsync(TDomainEntity entity, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
         if (dbEntity == null)
         {
-            return Task.FromResult<TDomainEntity?>(null);
+            return Task.FromResult<IMethodResponse<TDomainEntity>>(MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage)));
         }
 
         if (ShouldUseUserId(actor))
@@ -284,19 +361,26 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
 
         ApplyCreateMetadata(dbEntity, actor);
         var createdEntity = RepositoryDbSet.Add(dbEntity).Entity;
-        return Task.FromResult(RepositoryMapper.Map(createdEntity));
+        var mappedEntity = RepositoryMapper.Map(createdEntity);
+
+        if (mappedEntity == null)
+        {
+            return Task.FromResult<IMethodResponse<TDomainEntity>>(MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage)));
+        }
+
+        return Task.FromResult<IMethodResponse<TDomainEntity>>(MethodResponse<TDomainEntity>.Success(mappedEntity));
     }
 
     /// <summary>
     /// Updates an existing entity instance and applies metadata when supported.
     /// </summary>
-    public async Task<TDomainEntity?> UpdateAsync(TResourceKey id, TDomainEntity entity, TActor? actor = default)
+    public async Task<IMethodResponse<TDomainEntity>> UpdateAsync(TResourceKey id, TDomainEntity entity, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
         if (dbEntity == null)
         {
-            return null;
+            return MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
         }
 
         var existingDbEntity = await RepositoryDbSet
@@ -305,7 +389,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
 
         if (existingDbEntity == null)
         {
-            return null;
+            return MethodResponse<TDomainEntity>.Failure(CreateError(NotFoundErrorCode, NotFoundErrorMessage));
         }
 
         dbEntity.Id = id;
@@ -314,7 +398,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         {
             if (!((IBaseEntityUserId<TActor>)existingDbEntity).UserId.Equals(actor))
             {
-                return null;
+                return MethodResponse<TDomainEntity>.Failure(CreateError(ForbiddenErrorCode, ForbiddenErrorMessage));
             }
 
             ((IBaseEntityUserId<TActor>)dbEntity).UserId = ((IBaseEntityUserId<TActor>)existingDbEntity).UserId;
@@ -322,23 +406,30 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
 
         ApplyUpdateMetadata(dbEntity, existingDbEntity, actor);
         var updatedEntity = RepositoryDbSet.Update(dbEntity).Entity;
-        return RepositoryMapper.Map(updatedEntity);
+        var mappedEntity = RepositoryMapper.Map(updatedEntity);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TDomainEntity>.Success(mappedEntity);
     }
 
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
-    public async Task<bool> RemoveAsync(TResourceKey id, TActor? actor = default)
+    public async Task<IMethodResponse<bool>> RemoveAsync(TResourceKey id, TActor? actor = default)
     {
         var query = GetQuery(actor, asTracking: true).Where(e => e.Id.Equals(id));
         var dbEntity = await query.FirstOrDefaultAsync();
 
         if (dbEntity == null)
         {
-            return false;
+            return MethodResponse<bool>.Failure(CreateError(NotFoundErrorCode, NotFoundErrorMessage));
         }
 
         RepositoryDbSet.Remove(dbEntity);
-        return true;
+        return MethodResponse<bool>.Success(true);
     }
 }

@@ -12,6 +12,8 @@ This package set provides shared abstractions and generic implementations for co
 - `alaasmagi.Base.DataAccess.EF`
 - `alaasmagi.Base.Contracts.Application`
 - `alaasmagi.Base.Application`
+- `alaasmagi.Base.Contracts.Exception`
+- `alaasmagi.Base.Exception`
 
 ## What Is Included
 

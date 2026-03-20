@@ -10,17 +10,17 @@ public interface IError : IError<string>
 /// <summary>
 /// Represents an error with a strongly typed error code.
 /// </summary>
-/// <typeparam name="T">The type of the error code.</typeparam>
-public interface IError<T>
-    where T : IEquatable<T>
+/// <typeparam name="TCode">The type of the error code.</typeparam>
+public interface IError<TCode>
+    where TCode : IEquatable<TCode>
 {
     /// <summary>
-    /// Gets or sets the machine-readable error code.
+    /// Gets the machine-readable error code.
     /// </summary>
-    public T Code { get; set; }
+    public TCode Code { get; }
 
     /// <summary>
-    /// Gets or sets the human-readable error message.
+    /// Gets the human-readable error message.
     /// </summary>
-    public string Message { get; set; }
+    public string Message { get; }
 }

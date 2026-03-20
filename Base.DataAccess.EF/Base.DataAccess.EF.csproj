@@ -3,7 +3,7 @@
     <PropertyGroup>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <TargetFramework>net10.0</TargetFramework>
-        <Version>1.0.7</Version>
+        <Version>1.0.8</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
         <PackageId>alaasmagi.Base.DataAccess.EF</PackageId>
@@ -16,8 +16,14 @@
   <ItemGroup>
     <ProjectReference Include="..\Base.Contracts.DataAccess\Base.Contracts.DataAccess.csproj" />
     <ProjectReference Include="..\Base.Contracts.Domain\Base.Contracts.Domain.csproj" />
-    <ProjectReference Include="..\Base.Contracts.DTO\Base.Contracts.DTO.csproj" />
   </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Base.Contracts.DTO\Base.Contracts.DTO.csproj" />
+      <ProjectReference Include="..\Base.Contracts.Exception\Base.Contracts.Exception.csproj" />
+      <ProjectReference Include="..\Base.DTO\Base.DTO.csproj" />
+      <ProjectReference Include="..\Base.Exception\Base.Exception.csproj" />
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />

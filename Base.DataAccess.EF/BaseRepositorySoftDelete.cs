@@ -1,6 +1,7 @@
 using Base.Contracts.DataAccess;
 using Base.Contracts.Domain;
 using Base.Contracts.DTO;
+using Base.DTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace Base.DataAccess.EF;
@@ -33,6 +34,28 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     where TResourceKey : IEquatable<TResourceKey>
     where TActor : IEquatable<TActor>
 {
+    
+    /// <summary>
+    /// Gets the default error code used when a soft-delete operation fails.
+    /// </summary>
+    protected virtual string SoftDeleteFailureErrorCode => "SOFT_DELETE_FAILED";
+
+    /// <summary>
+    /// Gets the default error message used when a soft-delete operation fails.
+    /// </summary>
+    protected virtual string SoftDeleteFailureErrorMessage => "The data could not be soft-deleted.";
+
+    /// <summary>
+    /// Gets the default error code used when a restore operation fails.
+    /// </summary>
+    protected virtual string RestoreFailureErrorCode => "RESTORE_FAILED";
+
+    /// <summary>
+    /// Gets the default error message used when a restore operation fails.
+    /// </summary>
+    protected virtual string RestoreFailureErrorMessage => "The data could not be restored.";
+    
+    
     /// <summary>
     /// Stores the mapper used to convert between domain and database entities.
     /// </summary>
@@ -73,16 +96,23 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     /// <summary>
     /// Retrieves all entities visible to the specified actor while optionally including soft-deleted records.
     /// </summary>
-    public async Task<IEnumerable<TDomainEntity>?> GetAllAsync(bool includeSoftDeleted = false, TActor? actor = default!)
+    public async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllAsync(bool includeSoftDeleted = false, TActor? actor = default!)
     {
         var entities = await GetQuery(includeSoftDeleted, actor).ToListAsync();
-        return RepositoryMapper.Map(entities);
+        var mappedEntities = RepositoryMapper.Map(entities);
+
+        if (mappedEntities == null)
+        {
+            return MethodResponse<IEnumerable<TDomainEntity>>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<IEnumerable<TDomainEntity>>.Success(mappedEntities);
     }
 
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor while optionally including soft-deleted records.
     /// </summary>
-    public async Task<IEnumerable<TDomainEntity>?> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default!)
+    public async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default!)
     {
         ValidatePaging(pageNr, pageSize);
 
@@ -91,70 +121,99 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
             .Take(pageSize)
             .ToListAsync();
 
-        return RepositoryMapper.Map(entities);
+        var mappedEntities = RepositoryMapper.Map(entities);
+
+        if (mappedEntities == null)
+        {
+            return MethodResponse<IEnumerable<TDomainEntity>>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<IEnumerable<TDomainEntity>>.Success(mappedEntities);
     }
 
     /// <summary>
     /// Counts all entities visible to the specified actor while optionally including soft-deleted records.
     /// </summary>
-    public async Task<int> GetCountAsync(bool includeSoftDeleted = false, TActor? actor = default!)
+    public async Task<IMethodResponse<int>> GetCountAsync(bool includeSoftDeleted = false, TActor? actor = default!)
     {
-        return await GetQuery(includeSoftDeleted, actor).CountAsync();
+        var count = await GetQuery(includeSoftDeleted, actor).CountAsync();
+        return MethodResponse<int>.Success(count);
     }
 
     /// <summary>
     /// Retrieves an entity by its identifier while optionally including soft-deleted records visible to the specified actor.
     /// </summary>
-    public async Task<TDomainEntity?> GetByIdAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!)
+    public async Task<IMethodResponse<TDomainEntity>> GetByIdAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!)
     {
         var entity = await GetQuery(includeSoftDeleted, actor)
             .FirstOrDefaultAsync(resourceEntity => resourceEntity.Id.Equals(id));
 
-        return RepositoryMapper.Map(entity);
+        if (entity == null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        var mappedEntity = RepositoryMapper.Map(entity);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TDomainEntity>.Success(mappedEntity);
     }
 
     /// <summary>
     /// Determines whether an entity with the specified identifier exists while optionally including soft-deleted records visible to the specified actor.
     /// </summary>
-    public async Task<bool> ExistsAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!)
+    public async Task<IMethodResponse<bool>> ExistsAsync(TResourceKey id, bool includeSoftDeleted = false, TActor? actor = default!)
     {
-        return await GetQuery(includeSoftDeleted, actor)
+        var exists = await GetQuery(includeSoftDeleted, actor)
             .AnyAsync(resourceEntity => resourceEntity.Id.Equals(id));
+
+        return MethodResponse<bool>.Success(exists);
     }
 
     /// <summary>
     /// Marks an entity as soft deleted.
     /// </summary>
-    public async Task<bool> SoftDeleteAsync(TResourceKey id, TActor? actor = default!)
+    public async Task<IMethodResponse<bool>> SoftDeleteAsync(TResourceKey id, TActor? actor = default!)
     {
         var entity = await GetQuery(true, actor, asTracking: true)
             .FirstOrDefaultAsync(resourceEntity => resourceEntity.Id.Equals(id));
 
         if (entity == null || entity.IsDeleted)
         {
-            return false;
+            return MethodResponse<bool>.Failure(CreateError(SoftDeleteFailureErrorCode, SoftDeleteFailureErrorMessage));
         }
 
         entity.IsDeleted = true;
         ApplyModificationMetadata(entity, actor);
-        return true;
+        return MethodResponse<bool>.Success(true);
     }
 
     /// <summary>
     /// Restores a previously soft-deleted entity.
     /// </summary>
-    public async Task<TDomainEntity?> RestoreAsync(TResourceKey id, TActor? actor = default!)
+    public async Task<IMethodResponse<TDomainEntity>> RestoreAsync(TResourceKey id, TActor? actor = default!)
     {
         var entity = await GetQuery(true, actor, asTracking: true)
             .FirstOrDefaultAsync(resourceEntity => resourceEntity.Id.Equals(id));
 
         if (entity == null || !entity.IsDeleted)
         {
-            return null;
+            return MethodResponse<TDomainEntity>.Failure(CreateError(RestoreFailureErrorCode, RestoreFailureErrorMessage));
         }
 
         entity.IsDeleted = false;
         ApplyModificationMetadata(entity, actor);
-        return RepositoryMapper.Map(entity);
+        var mappedEntity = RepositoryMapper.Map(entity);
+
+        if (mappedEntity == null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
+        }
+
+        return MethodResponse<TDomainEntity>.Success(mappedEntity);
     }
 }

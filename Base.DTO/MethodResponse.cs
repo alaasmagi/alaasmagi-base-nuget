@@ -7,7 +7,6 @@ namespace Base.DTO;
 /// </summary>
 /// <typeparam name="TValue">The type of the successful return value.</typeparam>
 public class MethodResponse<TValue> : IMethodResponse<TValue>
-    where TValue : class
 {
     /// <summary>
     /// Gets a value indicating whether the operation completed successfully.
@@ -69,8 +68,6 @@ public class MethodResponse<TValue> : IMethodResponse<TValue>
 /// <typeparam name="TValue">The type of the successful return value.</typeparam>
 /// <typeparam name="TError">The type of the error payload.</typeparam>
 public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
-    where TValue : class
-    where TError : IError
 {
     /// <summary>
     /// Gets a value indicating whether the operation completed successfully.
@@ -84,7 +81,6 @@ public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
 
     /// <summary>
     /// Gets the error payload when <see cref="Successful"/> is <see langword="false"/>.
-    /// The value is populated only when the provided error implements <typeparamref name="TError"/>.
     /// </summary>
     public TError? Error { get; }
 
@@ -102,10 +98,10 @@ public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
     /// Initializes a failed response instance.
     /// </summary>
     /// <param name="error">The error payload describing the failure.</param>
-    private MethodResponse(IError error)
+    private MethodResponse(TError error)
     {
         Successful = false;
-        Error = (TError?)(object?)error;
+        Error = error;
     }
 
     /// <summary>
@@ -122,7 +118,7 @@ public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
     /// </summary>
     /// <param name="error">The error payload describing the failure.</param>
     /// <returns>
-    /// A failed <see cref="MethodResponse{TValue, TError}"/> whose <see cref="Error"/> value is set when the provided error implements <typeparamref name="TError"/>.
+    /// A failed <see cref="MethodResponse{TValue, TError}"/> containing the provided error.
     /// </returns>
-    public static MethodResponse<TValue, TError> Failure(IError error) => new(error);
+    public static MethodResponse<TValue, TError> Failure(TError error) => new(error);
 }

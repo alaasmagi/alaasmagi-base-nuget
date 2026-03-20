@@ -3,21 +3,39 @@ using Base.Contracts.DTO;
 namespace Base.DTO;
 
 /// <summary>
-/// Represents a concrete error payload with a strongly typed error code and message.
+/// Represents a concrete error payload with a string-based code and message.
 /// </summary>
-/// <typeparam name="T">The type of the error code.</typeparam>
 /// <param name="code">The machine-readable error code.</param>
 /// <param name="message">The human-readable error message.</param>
-public class Error<T>(T code, string message) : IError<T>
-    where T : IEquatable<T>
+public class Error(string code, string message) : IError
 {
     /// <summary>
-    /// Gets or sets the machine-readable error code.
+    /// Gets the machine-readable error code.
     /// </summary>
-    public T Code { get; set; } = code;
+    public string Code { get; } = code;
 
     /// <summary>
-    /// Gets or sets the human-readable error message.
+    /// Gets the human-readable error message.
     /// </summary>
-    public string Message { get; set; } = message;
+    public string Message { get; } = message;
+}
+
+/// <summary>
+/// Represents a concrete error payload with a strongly typed error code and message.
+/// </summary>
+/// <typeparam name="TCode">The type of the error code.</typeparam>
+/// <param name="code">The machine-readable error code.</param>
+/// <param name="message">The human-readable error message.</param>
+public class Error<TCode>(TCode code, string message) : IError<TCode>
+    where TCode : IEquatable<TCode>
+{
+    /// <summary>
+    /// Gets the machine-readable error code.
+    /// </summary>
+    public TCode Code { get; } = code;
+
+    /// <summary>
+    /// Gets the human-readable error message.
+    /// </summary>
+    public string Message { get; } = message;
 }

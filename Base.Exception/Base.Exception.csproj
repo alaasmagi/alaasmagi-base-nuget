@@ -6,24 +6,19 @@
         <Version>1.0.8</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
-        <PackageId>alaasmagi.Base.Contracts.DTO</PackageId>
-        <Description>Base Contracts DTO package for .NET webapps</Description>
+        <PackageId>alaasmagi.Base.Exception</PackageId>
+        <Description>Base Exception package for .NET webapps</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Base.Contracts.DTO</RootNamespace>
         <PackageReadmeFile>Base.NuGet.README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
+      <ProjectReference Include="..\Base.Contracts.Exception\Base.Contracts.Exception.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <None Include="..\Base.NuGet.README.md" Pack="true" PackagePath="\" Visible="false" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Base.Contracts.Domain\Base.Contracts.Domain.csproj" />
     </ItemGroup>
 
 </Project>

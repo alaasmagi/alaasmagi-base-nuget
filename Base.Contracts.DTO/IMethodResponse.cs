@@ -5,7 +5,6 @@ namespace Base.Contracts.DTO;
 /// </summary>
 /// <typeparam name="TValue">The type of the successful return value.</typeparam>
 public interface IMethodResponse<TValue> : IMethodResponse<TValue, IError>
-    where TValue : class
 {
 }
 
@@ -15,8 +14,6 @@ public interface IMethodResponse<TValue> : IMethodResponse<TValue, IError>
 /// <typeparam name="TValue">The type of the successful return value.</typeparam>
 /// <typeparam name="TError">The type of the error payload.</typeparam>
 public interface IMethodResponse<TValue, TError>
-    where TValue : class
-    where TError : IError
 {
     /// <summary>
     /// Gets a value indicating whether the operation completed successfully.
