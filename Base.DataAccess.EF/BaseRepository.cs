@@ -36,42 +36,42 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Gets the default error code used when a requested entity or result cannot be found.
     /// </summary>
-    protected virtual string NotFoundErrorCode => "NOT_FOUND";
+    protected virtual string NotFoundErrorCode => ErrorDefaults.Codes.NotFound;
 
     /// <summary>
     /// Gets the default error message used when a requested entity or result cannot be found.
     /// </summary>
-    protected virtual string NotFoundErrorMessage => "The requested data could not be retrieved.";
+    protected virtual string NotFoundErrorMessage => ErrorDefaults.Messages.NotFound;
     
     /// <summary>
     /// Gets the default error code used when entity mapping fails.
     /// </summary>
-    protected virtual string MappingFailureErrorCode => "MAPPING_FAILED";
+    protected virtual string MappingFailureErrorCode => ErrorDefaults.Codes.MapFailed;
 
     /// <summary>
     /// Gets the default error message used when entity mapping fails.
     /// </summary>
-    protected virtual string MappingFailureErrorMessage => "The data could not be mapped to the domain model.";
+    protected virtual string MappingFailureErrorMessage => ErrorDefaults.Messages.MapToDomainModelFailed;
     
     /// <summary>
     /// Gets the default error code used when an operation is forbidden.
     /// </summary>
-    protected virtual string ForbiddenErrorCode => "FORBIDDEN";
+    protected virtual string ForbiddenErrorCode => ErrorDefaults.Codes.Forbidden;
 
     /// <summary>
     /// Gets the default error message used when an operation is forbidden.
     /// </summary>
-    protected virtual string ForbiddenErrorMessage => "The requested entity is not accessible for the current actor.";
+    protected virtual string ForbiddenErrorMessage => ErrorDefaults.Messages.Forbidden;
     
     /// <summary>
     /// Gets the default error code used when an invalid paging parameter is provided.
     /// </summary>
-    protected virtual string InvalidPagingErrorCode => "INVALID_PAGING";
+    protected virtual string InvalidPagingErrorCode => ErrorDefaults.Codes.InvalidPaging;
 
     /// <summary>
     /// Gets the default error message used when  an invalid paging parameter is provided.
     /// </summary>
-    protected virtual string InvalidPagingErrorMessage => "The provided paging parameters are invalid.";
+    protected virtual string InvalidPagingErrorMessage => ErrorDefaults.Messages.InvalidPaging;
 
     
     /// <summary>

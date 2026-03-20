@@ -35,42 +35,42 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Gets the default error code used when a requested entity or result cannot be found.
     /// </summary>
-    protected virtual string NotFoundErrorCode => "NOT_FOUND";
+    protected virtual string NotFoundErrorCode => ErrorDefaults.Codes.NotFound;
 
     /// <summary>
     /// Gets the default error message used when a requested entity or result cannot be found.
     /// </summary>
-    protected virtual string NotFoundErrorMessage => "The requested data could not be retrieved.";
+    protected virtual string NotFoundErrorMessage => ErrorDefaults.Messages.NotFound;
 
     /// <summary>
     /// Gets the default error code used when entity updates fail.
     /// </summary>
-    protected virtual string UpdatingFailureErrorCode => "UPDATING_FAILED";
+    protected virtual string UpdatingFailureErrorCode => ErrorDefaults.Codes.UpdateFailed;
 
     /// <summary>
     /// Gets the default error message used when entity updates fail.
     /// </summary>
-    protected virtual string UpdatingFailureErrorMessage => "The data could not be updated.";
+    protected virtual string UpdatingFailureErrorMessage => ErrorDefaults.Messages.UpdateFailed;
 
     /// <summary>
     /// Gets the default error code used when entity removal fails.
     /// </summary>
-    protected virtual string RemovingFailureErrorCode => "REMOVING_FAILED";
+    protected virtual string RemovingFailureErrorCode => ErrorDefaults.Codes.RemoveFailed;
 
     /// <summary>
     /// Gets the default error message used when entity removal fails.
     /// </summary>
-    protected virtual string RemovingFailureErrorMessage => "The data could not be removed.";
+    protected virtual string RemovingFailureErrorMessage => ErrorDefaults.Messages.RemoveFailed;
 
     /// <summary>
     /// Gets the default error code used when entity mapping fails.
     /// </summary>
-    protected virtual string MappingFailureErrorCode => "MAPPING_FAILED";
+    protected virtual string MappingFailureErrorCode => ErrorDefaults.Codes.MapFailed;
 
     /// <summary>
     /// Gets the default error message used when entity mapping fails.
     /// </summary>
-    protected virtual string MappingFailureErrorMessage => "The data could not be mapped to the service model.";
+    protected virtual string MappingFailureErrorMessage => ErrorDefaults.Messages.MapToServiceModelFailed;
 
     /// <summary>
     /// Stores the unit of work used to persist service-level changes.
@@ -112,7 +112,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
 
         if (!repositoryResponse.Successful)
         {
-            return MethodResponse<IEnumerable<TEntity>>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, "The requested entities could not be retrieved."));
+            return MethodResponse<IEnumerable<TEntity>>.Failure(repositoryResponse.Error ?? CreateError(NotFoundErrorCode, NotFoundErrorMessage));
         }
 
         var mappedEntities = ServiceMapper.Map(repositoryResponse.Value);

@@ -38,22 +38,22 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     /// <summary>
     /// Gets the default error code used when a soft-delete operation fails.
     /// </summary>
-    protected virtual string SoftDeleteFailureErrorCode => "SOFT_DELETE_FAILED";
+    protected virtual string SoftDeleteFailureErrorCode => ErrorDefaults.Codes.SoftDeleteFailed;
 
     /// <summary>
     /// Gets the default error message used when a soft-delete operation fails.
     /// </summary>
-    protected virtual string SoftDeleteFailureErrorMessage => "The data could not be soft-deleted.";
+    protected virtual string SoftDeleteFailureErrorMessage => ErrorDefaults.Messages.SoftDeleteFailed;
 
     /// <summary>
     /// Gets the default error code used when a restore operation fails.
     /// </summary>
-    protected virtual string RestoreFailureErrorCode => "RESTORE_FAILED";
+    protected virtual string RestoreFailureErrorCode => ErrorDefaults.Codes.RestoreFailed;
 
     /// <summary>
     /// Gets the default error message used when a restore operation fails.
     /// </summary>
-    protected virtual string RestoreFailureErrorMessage => "The data could not be restored.";
+    protected virtual string RestoreFailureErrorMessage => ErrorDefaults.Messages.RestoreFailed;
     
     
     /// <summary>
