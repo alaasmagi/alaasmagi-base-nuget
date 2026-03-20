@@ -1,8 +1,8 @@
 # alaasmagi Base Packages
 
-Reusable base-layer building blocks for .NET web applications.
+Reusable base-layer building blocks for .NET applications.
 
-This package set provides shared abstractions and generic implementations for common application layers:
+This package set provides shared contracts and generic implementations for common layers:
 
 - `alaasmagi.Base.Contracts.Domain`
 - `alaasmagi.Base.Domain`
@@ -15,34 +15,128 @@ This package set provides shared abstractions and generic implementations for co
 - `alaasmagi.Base.Contracts.Exception`
 - `alaasmagi.Base.Exception`
 
-## What Is Included
+## Included Capabilities
 
-These packages help standardize repetitive application code such as:
+These packages cover the common building blocks used across layered applications:
 
-- base entity contracts with strongly typed IDs
-- metadata support (`CreatedBy`, `CreatedAt`, `UpdatedBy`, `UpdatedAt`)
-- soft-delete support
-- user-owned entity support
+- strongly typed base entity contracts
+- domain base classes with metadata, ownership, and soft delete support
+- mapper abstractions between layers
+- method-response and error models
 - generic repository contracts
 - generic EF Core repository implementations
+- unit-of-work abstractions
 - generic application service contracts and implementations
-- mapper contracts
-- method response and error models
+- typed base exceptions and HTTP exceptions
+
+## Package Overview
+
+### `alaasmagi.Base.Contracts.Domain`
+
+Defines contracts such as:
+
+- `IBaseEntity<TKey>`
+- `IBaseEntityMeta`
+- `IBaseEntitySoftDelete`
+- `IBaseEntityUserId<TKey>`
+- `IBaseEntityWithMeta<TKey>`
+- `IBaseEntityWithMetaSoftDelete<TKey>`
+
+### `alaasmagi.Base.Domain`
+
+Provides reusable base entity types such as:
+
+- `BaseEntity<TKey>`
+- `BaseEntityWithMeta<TKey>`
+- `BaseEntityWithMetaSoftDelete<TKey>`
+- `BaseEntityUser<TKey>`
+- `BaseEntityUserWithMeta<TKey, TUserKey>`
+- `BaseEntityUserWithMetaSoftDelete<TKey, TUserKey>`
+
+### `alaasmagi.Base.Contracts.DTO`
+
+Defines:
+
+- `IMapper<TUpperEntity, TLowerEntity, TKey>`
+- `IMethodResponse<TValue>`
+- `IError<TCode>`
+
+### `alaasmagi.Base.DTO`
+
+Provides:
+
+- `MethodResponse<TValue>`
+- `MethodResponse<TValue, TError>`
+- `Error`
+- `Error<TCode>`
+- `ErrorDefaults`
+
+### `alaasmagi.Base.Contracts.DataAccess`
+
+Defines:
+
+- `IBaseRepository<TEntity, TResourceKey, TActor>`
+- `IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor>`
+- `IBaseUow`
+
+### `alaasmagi.Base.DataAccess.EF`
+
+Provides EF Core implementations such as:
+
+- `BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TActor>`
+- `BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper, TResourceKey, TActor>`
+- `BaseUow<TDbContext>`
+
+### `alaasmagi.Base.Contracts.Application`
+
+Defines:
+
+- `IBaseService<TEntity, TKey, TActor>`
+- `IBaseServiceSoftDelete<TEntity, TKey, TActor>`
+- `IBaseServiceUow`
+
+### `alaasmagi.Base.Application`
+
+Provides:
+
+- `BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor>`
+- `BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TActor>`
+- `BaseServiceUow<TUow>`
+
+### `alaasmagi.Base.Contracts.Exception`
+
+Defines:
+
+- `IBaseException<TCode>`
+- `IHttpException<TCode>`
+
+### `alaasmagi.Base.Exception`
+
+Provides:
+
+- `BaseException`
+- `BaseException<TCode>`
+- `HttpException`
+- `HttpException<TCode>`
 
 ## Typical Usage
 
 A common setup looks like this:
 
-1. Define your domain entity by inheriting from one of the `Base.Domain` classes.
-2. Implement a mapper between your domain model and persistence model for the repository layer.
-3. If your application layer uses separate DTOs or models, implement a second mapper between the application model and the domain model for the service layer.
-4. Inherit from `BaseRepository<...>` or `BaseRepositorySoftDelete<...>`.
+1. Inherit from a `Base.Domain` entity type that matches your needs.
+2. Implement an `IMapper` between your domain model and EF model if those types differ.
+3. Inherit from `BaseRepository<...>` or `BaseRepositorySoftDelete<...>`.
+4. If your application layer uses different models, implement another mapper between application and domain models.
 5. Inherit from `BaseService<...>` or `BaseServiceSoftDelete<...>`.
-6. Use the contracts from `Base.Contracts.*` at your application boundaries.
 
 ## Example
 
 ```csharp
+using Base.Contracts.DTO;
+using Base.DataAccess.EF;
+using Base.Domain;
+using Microsoft.EntityFrameworkCore;
+
 public class Todo : BaseEntityWithMetaSoftDelete<Guid>
 {
     public string Title { get; set; } = default!;
@@ -91,31 +185,31 @@ public class TodoMapper : IMapper<Todo, TodoDbEntity, Guid>
 public class TodoRepository
     : BaseRepositorySoftDelete<Todo, TodoDbEntity, TodoMapper, Guid, Guid>
 {
-    public TodoRepository(AppDbContext dbContext, TodoMapper mapper)
+    public TodoRepository(DbContext dbContext, TodoMapper mapper)
         : base(dbContext, mapper)
     {
     }
 }
 ```
 
-## Target Framework
+## Framework and Dependencies
 
-These packages currently target:
+All packages in this repository currently target:
 
 - `.NET 10.0`
 
-Some packages also depend on:
+Relevant package dependencies used across the set include:
 
 - `Microsoft.EntityFrameworkCore`
-- `Microsoft.Extensions.Caching.StackExchangeRedis` in `alaasmagi.Base.Domain`
-- `Sentry` in `alaasmagi.Base.Domain`
-- `Sentry.AspNetCore` in `alaasmagi.Base.Domain`
+- `Microsoft.Extensions.Caching.StackExchangeRedis`
+- `Sentry`
+- `Sentry.AspNetCore`
 
 ## Notes
 
-- The packages are designed to be used together.
-- Package versions should be kept in sync across the full `alaasmagi.Base.*` set.
-- `Base.DataAccess.EF` is intended for EF Core-based persistence.
-- `Base.Application` builds on repository and mapper abstractions from the contracts packages.
-- Metadata timestamps are populated automatically by the EF repository base classes when the entity type implements `IBaseEntityMeta`.
-- Metadata user identifiers are populated when a non-default `userId` is supplied to repository methods.
+- These packages are designed to be used together, but each package can also be consumed independently where appropriate.
+- Keep package versions in sync across the `alaasmagi.Base.*` set.
+- `Base.DataAccess.EF` is intended for EF Core based persistence.
+- Repository and service methods return `IMethodResponse<T>` so calling code can handle success and failure consistently.
+- Metadata timestamps and actor fields are populated automatically by the EF repository base classes when supported by the entity type.
+- User-based scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is supplied.
