@@ -30,7 +30,7 @@ public class BaseServiceUow<TUow> : IBaseServiceUow
     /// <returns>
     /// A task that resolves to the number of state entries written to the underlying store.
     /// </returns>
-    public async Task<int> SaveChangesAsync()
+    public virtual async Task<int> SaveChangesAsync()
     {
         return await Uow.SaveChangesAsync();
     }

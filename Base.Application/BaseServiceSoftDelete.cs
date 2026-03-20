@@ -90,7 +90,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Retrieves all entities visible to the specified actor while optionally including soft-deleted records.
     /// </summary>
-    public async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(bool includeSoftDeleted = false, TActor? actor = default)
+    public virtual async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(bool includeSoftDeleted = false, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.GetAllAsync(includeSoftDeleted, actor);
 
@@ -112,7 +112,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor while optionally including soft-deleted records.
     /// </summary>
-    public async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default)
+    public virtual async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.GetAllByPageAsync(pageNr, pageSize, includeSoftDeleted, actor);
 
@@ -134,7 +134,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Counts all entities visible to the specified actor while optionally including soft-deleted records.
     /// </summary>
-    public async Task<IMethodResponse<int>> GetCountAsync(bool includeSoftDeleted = false, TActor? actor = default)
+    public virtual async Task<IMethodResponse<int>> GetCountAsync(bool includeSoftDeleted = false, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.GetCountAsync(includeSoftDeleted, actor);
 
@@ -149,7 +149,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Retrieves an entity by its identifier while optionally including soft-deleted records visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<TEntity>> GetByIdAsync(TKey id, bool includeSoftDeleted = false, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> GetByIdAsync(TKey id, bool includeSoftDeleted = false, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.GetByIdAsync(id, includeSoftDeleted, actor);
 
@@ -171,7 +171,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Determines whether an entity with the specified identifier exists while optionally including soft-deleted records visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<bool>> ExistsAsync(TKey id, bool includeSoftDeleted = false, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> ExistsAsync(TKey id, bool includeSoftDeleted = false, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.ExistsAsync(id, includeSoftDeleted, actor);
 
@@ -186,7 +186,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Marks an entity as soft deleted.
     /// </summary>
-    public async Task<IMethodResponse<bool>> SoftDeleteAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> SoftDeleteAsync(TKey id, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.SoftDeleteAsync(id, actor);
 
@@ -202,7 +202,7 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     /// <summary>
     /// Restores a previously soft-deleted entity.
     /// </summary>
-    public async Task<IMethodResponse<TEntity>> RestoreAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> RestoreAsync(TKey id, TActor? actor = default)
     {
         var repositoryResponse = await SoftDeleteServiceRepository.RestoreAsync(id, actor);
 

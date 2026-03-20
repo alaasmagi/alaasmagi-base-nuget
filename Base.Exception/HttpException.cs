@@ -41,7 +41,7 @@ public class HttpException<TCode> : BaseException<TCode>, IHttpException<TCode>
     /// <summary>
     /// Gets the HTTP status code associated with the exception.
     /// </summary>
-    public int StatusCode { get; }
+    public virtual int StatusCode { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HttpException{TCode}"/> class.

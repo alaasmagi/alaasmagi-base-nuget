@@ -21,5 +21,5 @@ public abstract class BaseEntityUser<TKey> : IBaseEntityUserId<TKey>
     /// Gets or sets the identifier of the user associated with the entity.
     /// </summary>
     [Required]
-    public TKey UserId { get; set; } = default!;
+    public virtual TKey UserId { get; set; } = default!;
 }

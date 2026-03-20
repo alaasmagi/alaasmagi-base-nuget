@@ -39,7 +39,7 @@ public class BaseException<TCode> : System.Exception, IBaseException<TCode>
     /// <summary>
     /// Gets the machine-readable exception code.
     /// </summary>
-    public TCode Code { get; }
+    public virtual TCode Code { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseException{TCode}"/> class.

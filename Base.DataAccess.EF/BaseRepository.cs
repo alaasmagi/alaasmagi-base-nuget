@@ -247,7 +247,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Applies modification metadata to an entity when the entity type supports metadata fields.
     /// </summary>
-    protected void ApplyModificationMetadata(TDataAccessEntity entity, TActor? actor = default!)
+    protected virtual void ApplyModificationMetadata(TDataAccessEntity entity, TActor? actor = default!)
     {
         if (!HasMeta())
         {
@@ -267,7 +267,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Retrieves all entities visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllAsync(TActor? actor = default)
+    public virtual async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllAsync(TActor? actor = default)
     {
         var entities = await GetQuery(actor).ToListAsync();
         var mappedEntities = RepositoryMapper.Map(entities);
@@ -283,7 +283,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
+    public virtual async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
         ValidatePaging(pageNr, pageSize);
 
@@ -305,7 +305,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Counts all entities visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default)
+    public virtual async Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default)
     {
         var count = await GetQuery(actor).CountAsync();
         return MethodResponse<int>.Success(count);
@@ -314,7 +314,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    public async Task<IMethodResponse<bool>> ExistsAsync(TResourceKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> ExistsAsync(TResourceKey id, TActor? actor = default)
     {
         var exists = await GetQuery(actor).AnyAsync(e => e.Id.Equals(id));
         return MethodResponse<bool>.Success(exists);
@@ -323,7 +323,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    public async Task<IMethodResponse<TDomainEntity>> GetByIdAsync(TResourceKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TDomainEntity>> GetByIdAsync(TResourceKey id, TActor? actor = default)
     {
         var entity = await GetQuery(actor).FirstOrDefaultAsync(e => e.Id.Equals(id));
 
@@ -345,7 +345,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Creates a new entity instance and applies ownership and metadata when supported.
     /// </summary>
-    public Task<IMethodResponse<TDomainEntity>> CreateAsync(TDomainEntity entity, TActor? actor = default)
+    public virtual Task<IMethodResponse<TDomainEntity>> CreateAsync(TDomainEntity entity, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
@@ -374,7 +374,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Updates an existing entity instance and applies metadata when supported.
     /// </summary>
-    public async Task<IMethodResponse<TDomainEntity>> UpdateAsync(TResourceKey id, TDomainEntity entity, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TDomainEntity>> UpdateAsync(TResourceKey id, TDomainEntity entity, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
@@ -419,7 +419,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
-    public async Task<IMethodResponse<bool>> RemoveAsync(TResourceKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> RemoveAsync(TResourceKey id, TActor? actor = default)
     {
         var query = GetQuery(actor, asTracking: true).Where(e => e.Id.Equals(id));
         var dbEntity = await query.FirstOrDefaultAsync();

@@ -12,12 +12,12 @@ public class Error(string code, string message) : IError
     /// <summary>
     /// Gets the machine-readable error code.
     /// </summary>
-    public string Code { get; } = code;
+    public virtual string Code { get; } = code;
 
     /// <summary>
     /// Gets the human-readable error message.
     /// </summary>
-    public string Message { get; } = message;
+    public virtual string Message { get; } = message;
 }
 
 /// <summary>
@@ -32,10 +32,10 @@ public class Error<TCode>(TCode code, string message) : IError<TCode>
     /// <summary>
     /// Gets the machine-readable error code.
     /// </summary>
-    public TCode Code { get; } = code;
+    public virtual TCode Code { get; } = code;
 
     /// <summary>
     /// Gets the human-readable error message.
     /// </summary>
-    public string Message { get; } = message;
+    public virtual string Message { get; } = message;
 }

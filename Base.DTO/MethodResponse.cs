@@ -72,17 +72,17 @@ public class MethodResponse<TValue, TError> : IMethodResponse<TValue, TError>
     /// <summary>
     /// Gets a value indicating whether the operation completed successfully.
     /// </summary>
-    public bool Successful { get; }
+    public virtual bool Successful { get; }
 
     /// <summary>
     /// Gets the successful return value when <see cref="Successful"/> is <see langword="true"/>.
     /// </summary>
-    public TValue? Value { get; }
+    public virtual TValue? Value { get; }
 
     /// <summary>
     /// Gets the error payload when <see cref="Successful"/> is <see langword="false"/>.
     /// </summary>
-    public TError? Error { get; }
+    public virtual TError? Error { get; }
 
     /// <summary>
     /// Initializes a successful response instance.

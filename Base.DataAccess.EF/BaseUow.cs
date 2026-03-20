@@ -30,7 +30,7 @@ public class BaseUow<TDbContext> : IBaseUow
     /// <returns>
     /// A task that resolves to the number of state entries written to the database.
     /// </returns>
-    public async Task<int> SaveChangesAsync()
+    public virtual async Task<int> SaveChangesAsync()
     {
         return await UowDbContext.SaveChangesAsync();
     }

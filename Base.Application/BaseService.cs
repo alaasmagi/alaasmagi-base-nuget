@@ -106,7 +106,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Retrieves all entities visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(TActor? actor = default)
+    public virtual async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllAsync(TActor? actor = default)
     {
         var repositoryResponse = await ServiceRepository.GetAllAsync(actor);
 
@@ -128,7 +128,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Retrieves a single page of entities visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
+    public virtual async Task<IMethodResponse<IEnumerable<TEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
         var repositoryResponse = await ServiceRepository.GetAllByPageAsync(pageNr, pageSize, actor);
 
@@ -150,7 +150,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Counts all entities visible to the specified actor.
     /// </summary>
-    public async Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default)
+    public virtual async Task<IMethodResponse<int>> GetCountAsync(TActor? actor = default)
     {
         var repositoryResponse = await ServiceRepository.GetCountAsync(actor);
 
@@ -165,7 +165,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
-    public async Task<IMethodResponse<bool>> ExistsAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> ExistsAsync(TKey id, TActor? actor = default)
     {
         var repositoryResponse = await ServiceRepository.ExistsAsync(id, actor);
 
@@ -185,7 +185,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Retrieves an entity by its identifier.
     /// </summary>
-    public async Task<IMethodResponse<TEntity>> GetByIdAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> GetByIdAsync(TKey id, TActor? actor = default)
     {
         var repositoryResponse = await ServiceRepository.GetByIdAsync(id, actor);
 
@@ -207,7 +207,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Creates a new entity instance.
     /// </summary>
-    public async Task<IMethodResponse<TEntity>> CreateAsync(TEntity entity, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> CreateAsync(TEntity entity, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
@@ -237,7 +237,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Updates an existing entity instance.
     /// </summary>
-    public async Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
@@ -267,7 +267,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
-    public async Task<IMethodResponse<bool>> RemoveAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> RemoveAsync(TKey id, TActor? actor = default)
     {
         var repositoryResponse = await ServiceRepository.RemoveAsync(id, actor);
 
