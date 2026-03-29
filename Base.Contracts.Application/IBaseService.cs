@@ -86,19 +86,21 @@ public interface IBaseService<TEntity, TKey, TActor>
     /// </summary>
     /// <param name="id">The identifier of the entity to update.</param>
     /// <param name="entity">The new entity state.</param>
+    /// <param name="expectedConcurrencyToken">The expected concurrency token used to reject stale updates when the entity supports concurrency.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
     /// A task that resolves to the operation result containing either the updated entity or an error.
     /// </returns>
-    Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, string? expectedConcurrencyToken = default, TActor? actor = default!);
 
     /// <summary>
     /// Removes an entity by its identifier.
     /// </summary>
     /// <param name="id">The identifier of the entity to remove.</param>
+    /// <param name="expectedConcurrencyToken">The expected concurrency token used to reject stale removals when the entity supports concurrency.</param>
     /// <param name="actor">The optional actor used to scope the operation.</param>
     /// <returns>
     /// A task that resolves to the operation result containing either a successful removal flag or an error.
     /// </returns>
-    Task<IMethodResponse<bool>> RemoveAsync(TKey id, TActor? actor = default!);
+    Task<IMethodResponse<bool>> RemoveAsync(TKey id, string? expectedConcurrencyToken = default, TActor? actor = default!);
 }

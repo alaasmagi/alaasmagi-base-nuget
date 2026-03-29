@@ -80,19 +80,21 @@ public interface IBaseServiceSoftDelete<TEntity, TKey, TActor> : IBaseService<TE
     /// Marks an entity as soft deleted.
     /// </summary>
     /// <param name="id">The identifier of the entity to soft delete.</param>
+    /// <param name="expectedConcurrencyToken">The expected concurrency token used to reject stale soft-delete operations when the entity supports concurrency.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
     /// A task that resolves to the operation result containing either a successful soft-delete flag or an error.
     /// </returns>
-    Task<IMethodResponse<bool>> SoftDeleteAsync(TKey id, TActor? actor = default!);
+    Task<IMethodResponse<bool>> SoftDeleteAsync(TKey id, string? expectedConcurrencyToken = default, TActor? actor = default!);
 
     /// <summary>
     /// Restores a previously soft-deleted entity.
     /// </summary>
     /// <param name="id">The identifier of the entity to restore.</param>
+    /// <param name="expectedConcurrencyToken">The expected concurrency token used to reject stale restore operations when the entity supports concurrency.</param>
     /// <param name="actor">The optional actor used to scope or stamp the operation.</param>
     /// <returns>
     /// A task that resolves to the operation result containing either the restored entity or an error.
     /// </returns>
-    Task<IMethodResponse<TEntity>> RestoreAsync(TKey id, TActor? actor = default!);
+    Task<IMethodResponse<TEntity>> RestoreAsync(TKey id, string? expectedConcurrencyToken = default, TActor? actor = default!);
 }

@@ -235,9 +235,9 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     }
 
     /// <summary>
-    /// Updates an existing entity instance.
+    /// Updates an existing entity instance and forwards the supplied concurrency token to the repository.
     /// </summary>
-    public virtual async Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> UpdateAsync(TKey id, TEntity entity, string? expectedConcurrencyToken = default, TActor? actor = default)
     {
         var domainEntity = ServiceMapper.Map(entity);
 
@@ -246,7 +246,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
             return MethodResponse<TEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
         }
 
-        var repositoryResponse = await ServiceRepository.UpdateAsync(id, domainEntity, actor);
+        var repositoryResponse = await ServiceRepository.UpdateAsync(id, domainEntity, expectedConcurrencyToken, actor);
 
         if (!repositoryResponse.Successful)
         {
@@ -265,11 +265,11 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
     }
 
     /// <summary>
-    /// Removes an entity by its identifier.
+    /// Removes an entity by its identifier and forwards the supplied concurrency token to the repository.
     /// </summary>
-    public virtual async Task<IMethodResponse<bool>> RemoveAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> RemoveAsync(TKey id, string? expectedConcurrencyToken = default, TActor? actor = default)
     {
-        var repositoryResponse = await ServiceRepository.RemoveAsync(id, actor);
+        var repositoryResponse = await ServiceRepository.RemoveAsync(id, expectedConcurrencyToken, actor);
 
         if (!repositoryResponse.Successful)
         {

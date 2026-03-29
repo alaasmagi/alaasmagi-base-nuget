@@ -175,9 +175,9 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     }
 
     /// <summary>
-    /// Marks an entity as soft deleted.
+    /// Marks an entity as soft deleted after validating the supplied concurrency token when supported.
     /// </summary>
-    public virtual async Task<IMethodResponse<bool>> SoftDeleteAsync(TResourceKey id, TActor? actor = default!)
+    public virtual async Task<IMethodResponse<bool>> SoftDeleteAsync(TResourceKey id, string? expectedConcurrencyToken = default, TActor? actor = default!)
     {
         var entity = await GetQuery(true, actor, asTracking: true)
             .FirstOrDefaultAsync(resourceEntity => resourceEntity.Id.Equals(id));
@@ -187,15 +187,23 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
             return MethodResponse<bool>.Failure(CreateError(SoftDeleteFailureErrorCode, SoftDeleteFailureErrorMessage));
         }
 
+        var concurrencyError = ValidateConcurrencyToken(entity, expectedConcurrencyToken);
+
+        if (concurrencyError != null)
+        {
+            return MethodResponse<bool>.Failure(concurrencyError);
+        }
+
         entity.IsDeleted = true;
         ApplyModificationMetadata(entity, actor);
+        ApplyNewConcurrencyToken(entity);
         return MethodResponse<bool>.Success(true);
     }
 
     /// <summary>
-    /// Restores a previously soft-deleted entity.
+    /// Restores a previously soft-deleted entity after validating the supplied concurrency token when supported.
     /// </summary>
-    public virtual async Task<IMethodResponse<TDomainEntity>> RestoreAsync(TResourceKey id, TActor? actor = default!)
+    public virtual async Task<IMethodResponse<TDomainEntity>> RestoreAsync(TResourceKey id, string? expectedConcurrencyToken = default, TActor? actor = default!)
     {
         var entity = await GetQuery(true, actor, asTracking: true)
             .FirstOrDefaultAsync(resourceEntity => resourceEntity.Id.Equals(id));
@@ -205,8 +213,16 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
             return MethodResponse<TDomainEntity>.Failure(CreateError(RestoreFailureErrorCode, RestoreFailureErrorMessage));
         }
 
+        var concurrencyError = ValidateConcurrencyToken(entity, expectedConcurrencyToken);
+
+        if (concurrencyError != null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(concurrencyError);
+        }
+
         entity.IsDeleted = false;
         ApplyModificationMetadata(entity, actor);
+        ApplyNewConcurrencyToken(entity);
         var mappedEntity = RepositoryMapper.Map(entity);
 
         if (mappedEntity == null)

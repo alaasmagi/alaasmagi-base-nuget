@@ -73,6 +73,26 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// </summary>
     protected virtual string InvalidPagingErrorMessage => ErrorDefaults.Messages.InvalidPaging;
 
+    /// <summary>
+    /// Gets the default error code used when a concurrency conflict is detected.
+    /// </summary>
+    protected virtual string ConcurrencyConflictErrorCode => ErrorDefaults.Codes.ConcurrencyConflict;
+
+    /// <summary>
+    /// Gets the default error message used when a concurrency conflict is detected.
+    /// </summary>
+    protected virtual string ConcurrencyConflictErrorMessage => ErrorDefaults.Messages.ConcurrencyConflict;
+
+    /// <summary>
+    /// Gets the default error code used when a concurrency token is required but missing.
+    /// </summary>
+    protected virtual string ConcurrencyTokenRequiredErrorCode => ErrorDefaults.Codes.ConcurrencyTokenRequired;
+
+    /// <summary>
+    /// Gets the default error message used when a concurrency token is required but missing.
+    /// </summary>
+    protected virtual string ConcurrencyTokenRequiredErrorMessage => ErrorDefaults.Messages.ConcurrencyTokenRequired;
+
     
     /// <summary>
     /// Stores the database context used by the repository.
@@ -172,6 +192,81 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     private static bool HasMeta()
     {
         return typeof(IBaseEntityMeta).IsAssignableFrom(typeof(TDataAccessEntity));
+    }
+
+    /// <summary>
+    /// Determines whether the entity type supports optimistic concurrency tokens.
+    /// </summary>
+    protected virtual bool HasConcurrency()
+    {
+        return typeof(IBaseEntityConcurrency).IsAssignableFrom(typeof(TDataAccessEntity));
+    }
+
+    /// <summary>
+    /// Creates a new concurrency token value.
+    /// </summary>
+    protected virtual string CreateConcurrencyToken()
+    {
+        return Guid.NewGuid().ToString("N");
+    }
+
+    /// <summary>
+    /// Resolves the expected concurrency token from the explicit argument or from the incoming entity payload.
+    /// </summary>
+    protected virtual string? ResolveExpectedConcurrencyToken(TDataAccessEntity entity, string? expectedConcurrencyToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(expectedConcurrencyToken))
+        {
+            return expectedConcurrencyToken;
+        }
+
+        if (entity is IBaseEntityConcurrency concurrencyEntity && !string.IsNullOrWhiteSpace(concurrencyEntity.ConcurrencyToken))
+        {
+            return concurrencyEntity.ConcurrencyToken;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Applies a freshly generated concurrency token to the entity when supported.
+    /// </summary>
+    protected virtual void ApplyNewConcurrencyToken(TDataAccessEntity entity)
+    {
+        if (!HasConcurrency())
+        {
+            return;
+        }
+
+        ((IBaseEntityConcurrency)entity).ConcurrencyToken = CreateConcurrencyToken();
+    }
+
+    /// <summary>
+    /// Validates the expected concurrency token against the persisted entity.
+    /// The expected token must come from the caller or incoming payload, not from the persisted entity itself.
+    /// </summary>
+    /// <param name="persistedEntity">The currently persisted entity state.</param>
+    /// <param name="expectedConcurrencyToken">The token supplied by the caller for stale-write detection.</param>
+    protected virtual IError? ValidateConcurrencyToken(TDataAccessEntity persistedEntity, string? expectedConcurrencyToken = default)
+    {
+        if (!HasConcurrency())
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(expectedConcurrencyToken))
+        {
+            return CreateError(ConcurrencyTokenRequiredErrorCode, ConcurrencyTokenRequiredErrorMessage);
+        }
+
+        var currentToken = ((IBaseEntityConcurrency)persistedEntity).ConcurrencyToken;
+
+        if (!string.Equals(currentToken, expectedConcurrencyToken, StringComparison.Ordinal))
+        {
+            return CreateError(ConcurrencyConflictErrorCode, ConcurrencyConflictErrorMessage);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -360,6 +455,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         }
 
         ApplyCreateMetadata(dbEntity, actor);
+        ApplyNewConcurrencyToken(dbEntity);
         var createdEntity = RepositoryDbSet.Add(dbEntity).Entity;
         var mappedEntity = RepositoryMapper.Map(createdEntity);
 
@@ -372,9 +468,9 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     }
 
     /// <summary>
-    /// Updates an existing entity instance and applies metadata when supported.
+    /// Updates an existing entity instance, validates the supplied concurrency token when supported, and applies metadata.
     /// </summary>
-    public virtual async Task<IMethodResponse<TDomainEntity>> UpdateAsync(TResourceKey id, TDomainEntity entity, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TDomainEntity>> UpdateAsync(TResourceKey id, TDomainEntity entity, string? expectedConcurrencyToken = default, TActor? actor = default)
     {
         var dbEntity = RepositoryMapper.Map(entity);
 
@@ -404,7 +500,15 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
             ((IBaseEntityUserId<TActor>)dbEntity).UserId = ((IBaseEntityUserId<TActor>)existingDbEntity).UserId;
         }
 
+        var concurrencyError = ValidateConcurrencyToken(existingDbEntity, ResolveExpectedConcurrencyToken(dbEntity, expectedConcurrencyToken));
+
+        if (concurrencyError != null)
+        {
+            return MethodResponse<TDomainEntity>.Failure(concurrencyError);
+        }
+
         ApplyUpdateMetadata(dbEntity, existingDbEntity, actor);
+        ApplyNewConcurrencyToken(dbEntity);
         var updatedEntity = RepositoryDbSet.Update(dbEntity).Entity;
         var mappedEntity = RepositoryMapper.Map(updatedEntity);
 
@@ -417,9 +521,9 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     }
 
     /// <summary>
-    /// Removes an entity by its identifier.
+    /// Removes an entity by its identifier after validating the supplied concurrency token when supported.
     /// </summary>
-    public virtual async Task<IMethodResponse<bool>> RemoveAsync(TResourceKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> RemoveAsync(TResourceKey id, string? expectedConcurrencyToken = default, TActor? actor = default)
     {
         var query = GetQuery(actor, asTracking: true).Where(e => e.Id.Equals(id));
         var dbEntity = await query.FirstOrDefaultAsync();
@@ -427,6 +531,13 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         if (dbEntity == null)
         {
             return MethodResponse<bool>.Failure(CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        var concurrencyError = ValidateConcurrencyToken(dbEntity, expectedConcurrencyToken);
+
+        if (concurrencyError != null)
+        {
+            return MethodResponse<bool>.Failure(concurrencyError);
         }
 
         RepositoryDbSet.Remove(dbEntity);

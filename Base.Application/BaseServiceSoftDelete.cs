@@ -184,11 +184,11 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     }
 
     /// <summary>
-    /// Marks an entity as soft deleted.
+    /// Marks an entity as soft deleted and forwards the supplied concurrency token to the repository.
     /// </summary>
-    public virtual async Task<IMethodResponse<bool>> SoftDeleteAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<bool>> SoftDeleteAsync(TKey id, string? expectedConcurrencyToken = default, TActor? actor = default)
     {
-        var repositoryResponse = await SoftDeleteServiceRepository.SoftDeleteAsync(id, actor);
+        var repositoryResponse = await SoftDeleteServiceRepository.SoftDeleteAsync(id, expectedConcurrencyToken, actor);
 
         if (!repositoryResponse.Successful)
         {
@@ -200,11 +200,11 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
     }
 
     /// <summary>
-    /// Restores a previously soft-deleted entity.
+    /// Restores a previously soft-deleted entity and forwards the supplied concurrency token to the repository.
     /// </summary>
-    public virtual async Task<IMethodResponse<TEntity>> RestoreAsync(TKey id, TActor? actor = default)
+    public virtual async Task<IMethodResponse<TEntity>> RestoreAsync(TKey id, string? expectedConcurrencyToken = default, TActor? actor = default)
     {
-        var repositoryResponse = await SoftDeleteServiceRepository.RestoreAsync(id, actor);
+        var repositoryResponse = await SoftDeleteServiceRepository.RestoreAsync(id, expectedConcurrencyToken, actor);
 
         if (!repositoryResponse.Successful)
         {

@@ -1,0 +1,27 @@
+using System.ComponentModel.DataAnnotations;
+using Base.Contracts.Domain;
+
+namespace Base.Domain;
+
+/// <summary>
+/// Provides a base entity implementation that combines metadata, soft-delete support, a concurrency token, and a <see cref="Guid"/> user identifier.
+/// </summary>
+public abstract class BaseEntityUserWithMetaSoftDeleteConcurrency : BaseEntityUserWithMetaSoftDeleteConcurrency<Guid, Guid>
+{
+}
+
+/// <summary>
+/// Provides a base entity implementation that combines metadata, soft-delete support, a concurrency token, and a strongly typed user identifier.
+/// </summary>
+/// <typeparam name="TKey">The identifier type of the entity.</typeparam>
+/// <typeparam name="TUserKey">The identifier type of the user.</typeparam>
+public abstract class BaseEntityUserWithMetaSoftDeleteConcurrency<TKey, TUserKey> : BaseEntityWithMetaSoftDeleteConcurrency<TKey>, IBaseEntityUserId<TUserKey>
+    where TKey : IEquatable<TKey>
+    where TUserKey : IEquatable<TUserKey>
+{
+    /// <summary>
+    /// Gets or sets the identifier of the user associated with the entity.
+    /// </summary>
+    [Required]
+    public virtual TUserKey UserId { get; set; } = default!;
+}
