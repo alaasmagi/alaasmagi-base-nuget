@@ -2,7 +2,6 @@ using Base.Contracts.DataAccess;
 using Base.Contracts.Domain;
 using Base.Contracts.DTO;
 using Base.DTO;
-using Base.Exception;
 using Microsoft.EntityFrameworkCore;
 
 namespace Base.DataAccess.EF;
@@ -152,21 +151,18 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     protected virtual IError CreateError(string code, string message) => new Error(code, message);
 
     /// <summary>
-    /// Validates paging arguments and throws when the values are out of range.
+    /// Validates paging arguments and returns an error when the values are out of range.
     /// </summary>
     /// <param name="pageNr">The one-based page number to validate.</param>
     /// <param name="pageSize">The number of items per page to validate.</param>
-    protected virtual void ValidatePaging(int pageNr, int pageSize)
+    protected virtual IError? ValidatePaging(int pageNr, int pageSize)
     {
-        if (pageNr <= 0)
+        if (pageNr <= 0 || pageSize <= 0)
         {
-            throw new BaseException(InvalidPagingErrorCode, InvalidPagingErrorMessage);
+            return CreateError(InvalidPagingErrorCode, InvalidPagingErrorMessage);
         }
 
-        if (pageSize <= 0)
-        {
-            throw new BaseException(InvalidPagingErrorCode, InvalidPagingErrorMessage);
-        }
+        return null;
     }
 
     /// <summary>
@@ -239,6 +235,25 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
         }
 
         ((IBaseEntityConcurrency)entity).ConcurrencyToken = CreateConcurrencyToken();
+    }
+
+    /// <summary>
+    /// Assigns a new identifier for Guid-based entities when the incoming entity has the default key.
+    /// This allows the service layer to re-read the persisted row after <c>SaveChangesAsync</c>.
+    /// </summary>
+    protected virtual void EnsureCreateIdentifier(TDataAccessEntity entity)
+    {
+        if (typeof(TResourceKey) != typeof(Guid))
+        {
+            return;
+        }
+
+        if (!EqualityComparer<TResourceKey>.Default.Equals(entity.Id, default!))
+        {
+            return;
+        }
+
+        entity.Id = (TResourceKey)(object)Guid.NewGuid();
     }
 
     /// <summary>
@@ -380,7 +395,12 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
     /// </summary>
     public virtual async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllByPageAsync(int pageNr, int pageSize, TActor? actor = default)
     {
-        ValidatePaging(pageNr, pageSize);
+        var pagingError = ValidatePaging(pageNr, pageSize);
+
+        if (pagingError != null)
+        {
+            return MethodResponse<IEnumerable<TDomainEntity>>.Failure(pagingError);
+        }
 
         var entities = await GetQuery(actor)
             .Skip((pageNr - 1) * pageSize)
@@ -454,6 +474,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
             ((IBaseEntityUserId<TActor>)dbEntity).UserId = actor!;
         }
 
+        EnsureCreateIdentifier(dbEntity);
         ApplyCreateMetadata(dbEntity, actor);
         ApplyNewConcurrencyToken(dbEntity);
         var createdEntity = RepositoryDbSet.Add(dbEntity).Entity;
@@ -479,8 +500,7 @@ public class BaseRepository<TDomainEntity, TDataAccessEntity, TMapper, TResource
             return MethodResponse<TDomainEntity>.Failure(CreateError(MappingFailureErrorCode, MappingFailureErrorMessage));
         }
 
-        var existingDbEntity = await RepositoryDbSet
-            .AsNoTracking()
+        var existingDbEntity = await GetQuery(actor)
             .FirstOrDefaultAsync(e => e.Id.Equals(id));
 
         if (existingDbEntity == null)

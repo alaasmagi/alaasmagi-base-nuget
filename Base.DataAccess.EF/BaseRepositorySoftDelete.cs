@@ -73,6 +73,14 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     }
 
     /// <summary>
+    /// Builds the default query for inherited CRUD methods, excluding soft-deleted records.
+    /// </summary>
+    protected override IQueryable<TDataAccessEntity> GetQuery(TActor? actor = default!, bool asTracking = false)
+    {
+        return GetQuery(false, actor, asTracking);
+    }
+
+    /// <summary>
     /// Builds the base query while optionally including soft-deleted records.
     /// </summary>
     /// <param name="includeSoftDeleted">Controls whether soft-deleted entities are included in the result.</param>
@@ -114,7 +122,12 @@ public class BaseRepositorySoftDelete<TDomainEntity, TDataAccessEntity, TMapper,
     /// </summary>
     public virtual async Task<IMethodResponse<IEnumerable<TDomainEntity>>> GetAllByPageAsync(int pageNr, int pageSize, bool includeSoftDeleted = false, TActor? actor = default!)
     {
-        ValidatePaging(pageNr, pageSize);
+        var pagingError = ValidatePaging(pageNr, pageSize);
+
+        if (pagingError != null)
+        {
+            return MethodResponse<IEnumerable<TDomainEntity>>.Failure(pagingError);
+        }
 
         var entities = await GetQuery(includeSoftDeleted, actor)
             .Skip((pageNr - 1) * pageSize)

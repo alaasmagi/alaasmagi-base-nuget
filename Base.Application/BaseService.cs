@@ -224,7 +224,19 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
         }
 
         await ServiceUow.SaveChangesAsync();
-        var mappedEntity = ServiceMapper.Map(repositoryResponse.Value);
+        var persistedDomainEntity = repositoryResponse.Value;
+
+        if (!EqualityComparer<TKey>.Default.Equals(repositoryResponse.Value.Id, default!))
+        {
+            var refreshResponse = await ServiceRepository.GetByIdAsync(repositoryResponse.Value.Id, actor);
+
+            if (refreshResponse.Successful)
+            {
+                persistedDomainEntity = refreshResponse.Value;
+            }
+        }
+
+        var mappedEntity = ServiceMapper.Map(persistedDomainEntity);
 
         if (mappedEntity == null)
         {
@@ -254,7 +266,14 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
         }
 
         await ServiceUow.SaveChangesAsync();
-        var mappedEntity = ServiceMapper.Map(repositoryResponse.Value);
+        var refreshResponse = await ServiceRepository.GetByIdAsync(id, actor);
+
+        if (!refreshResponse.Successful)
+        {
+            return MethodResponse<TEntity>.Failure(refreshResponse.Error ?? CreateError(NotFoundErrorCode, NotFoundErrorMessage));
+        }
+
+        var mappedEntity = ServiceMapper.Map(refreshResponse.Value);
 
         if (mappedEntity == null)
         {

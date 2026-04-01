@@ -212,7 +212,14 @@ public class BaseServiceSoftDelete<TEntity, TDomainEntity, TRepository, TKey, TA
         }
 
         await SoftDeleteServiceUow.SaveChangesAsync();
-        var mappedEntity = SoftDeleteServiceMapper.Map(repositoryResponse.Value);
+        var refreshResponse = await SoftDeleteServiceRepository.GetByIdAsync(id, true, actor);
+
+        if (!refreshResponse.Successful)
+        {
+            return MethodResponse<TEntity>.Failure(refreshResponse.Error ?? CreateError(RestoreFailureErrorCode, RestoreFailureErrorMessage));
+        }
+
+        var mappedEntity = SoftDeleteServiceMapper.Map(refreshResponse.Value);
 
         if (mappedEntity == null)
         {
