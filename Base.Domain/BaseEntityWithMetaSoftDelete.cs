@@ -17,5 +17,9 @@ public abstract class BaseEntityWithMetaSoftDelete : BaseEntityWithMetaSoftDelet
 public abstract class BaseEntityWithMetaSoftDelete<TKey> : BaseEntityWithMeta<TKey>, IBaseEntityWithMetaSoftDelete<TKey>
     where TKey : IEquatable<TKey>
 {
-    public bool IsDeleted { get; set; } = false;
+    /// <summary>
+    /// Gets or sets a value indicating whether the entity is soft deleted.
+    /// </summary>
+    [Required]
+    public virtual bool IsDeleted { get; set; } = false;
 }
