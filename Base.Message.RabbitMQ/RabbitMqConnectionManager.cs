@@ -3,6 +3,9 @@ using RabbitMQ.Client;
 
 namespace Base.Message.RabbitMQ;
 
+/// <summary>
+/// Manages the shared RabbitMQ connection, channel, and topic exchange declaration.
+/// </summary>
 public class RabbitMqConnectionManager : IDisposable
 {
     private readonly ILogger<RabbitMqConnectionManager> _logger;
@@ -10,12 +13,22 @@ public class RabbitMqConnectionManager : IDisposable
     private IConnection? _connection;
     private IChannel? _channel;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RabbitMqConnectionManager"/> class.
+    /// </summary>
+    /// <param name="options">The RabbitMQ connection and exchange settings.</param>
+    /// <param name="logger">The logger used to report connection lifecycle events.</param>
     public RabbitMqConnectionManager(RabbitMqOptions options, ILogger<RabbitMqConnectionManager> logger)
     {
         _options = options;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Gets an open RabbitMQ channel, creating the connection and declaring the configured exchange when needed.
+    /// </summary>
+    /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
+    /// <returns>A task that resolves to an open RabbitMQ channel.</returns>
     public async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken = default)
     {
         if (_channel is { IsOpen: true })
@@ -49,6 +62,9 @@ public class RabbitMqConnectionManager : IDisposable
         return _channel;
     }
 
+    /// <summary>
+    /// Releases the RabbitMQ channel and connection.
+    /// </summary>
     public void Dispose()
     {
         _channel?.Dispose();

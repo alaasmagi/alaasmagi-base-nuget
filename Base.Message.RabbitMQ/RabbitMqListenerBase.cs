@@ -9,6 +9,10 @@ using RabbitMQ.Client.Events;
 
 namespace Base.Message.RabbitMQ;
 
+/// <summary>
+/// Provides a hosted RabbitMQ listener that consumes typed event envelopes from a queue.
+/// </summary>
+/// <typeparam name="TEvent">The event envelope type consumed by the listener.</typeparam>
 public abstract class RabbitMqListenerBase<TEvent> : BackgroundService
     where TEvent : IBaseEventEnvelope
 {
@@ -19,6 +23,15 @@ public abstract class RabbitMqListenerBase<TEvent> : BackgroundService
     private readonly string _queueName;
     private readonly string[] _routingKeyPatterns;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RabbitMqListenerBase{TEvent}"/> class.
+    /// </summary>
+    /// <param name="connectionManager">The RabbitMQ connection manager used to acquire a channel.</param>
+    /// <param name="options">The RabbitMQ connection and exchange settings.</param>
+    /// <param name="handler">The handler that processes deserialized events.</param>
+    /// <param name="logger">The logger used to report message processing failures.</param>
+    /// <param name="queueName">The queue name to declare and consume from.</param>
+    /// <param name="routingKeyPatterns">The routing key patterns to bind to the configured exchange.</param>
     protected RabbitMqListenerBase(
         RabbitMqConnectionManager connectionManager,
         RabbitMqOptions options,
@@ -35,6 +48,11 @@ public abstract class RabbitMqListenerBase<TEvent> : BackgroundService
         _routingKeyPatterns = routingKeyPatterns;
     }
 
+    /// <summary>
+    /// Declares the queue bindings and starts consuming RabbitMQ messages until the service is stopped.
+    /// </summary>
+    /// <param name="stoppingToken">A token that is triggered when the hosted service is stopping.</param>
+    /// <returns>A task that represents the lifetime of the background listener.</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var channel = await _connectionManager.GetChannelAsync(stoppingToken);

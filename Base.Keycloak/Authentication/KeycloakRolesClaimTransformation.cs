@@ -4,15 +4,27 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 
+/// <summary>
+/// Adds Keycloak realm and client roles to the principal as standard role claims.
+/// </summary>
 public class KeycloakRoleClaimsTransformation : IClaimsTransformation
 {
     private readonly KeycloakOptions _options;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="KeycloakRoleClaimsTransformation"/> class.
+    /// </summary>
+    /// <param name="options">The Keycloak authentication settings.</param>
     public KeycloakRoleClaimsTransformation(KeycloakOptions options)
     {
         _options = options;
     }
 
+    /// <summary>
+    /// Transforms the principal by adding role claims from Keycloak role payload claims.
+    /// </summary>
+    /// <param name="principal">The principal to transform.</param>
+    /// <returns>A task that resolves to the transformed principal.</returns>
     public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
         if (principal.Identity is not ClaimsIdentity identity)

@@ -6,6 +6,7 @@ This package set provides shared contracts and generic implementations for commo
 
 - `alaasmagi.Base.Contracts.Domain`
 - `alaasmagi.Base.Domain`
+- `alaasmagi.Base.Domain.Identity`
 - `alaasmagi.Base.Contracts.DTO`
 - `alaasmagi.Base.DTO`
 - `alaasmagi.Base.Contracts.DataAccess`
@@ -14,6 +15,10 @@ This package set provides shared contracts and generic implementations for commo
 - `alaasmagi.Base.Application`
 - `alaasmagi.Base.Contracts.Exception`
 - `alaasmagi.Base.Exception`
+- `alaasmagi.Base.Contracts.Message`
+- `alaasmagi.Base.Message`
+- `alaasmagi.Base.Message.RabbitMQ`
+- `alaasmagi.Base.Keycloak`
 
 ## Included Capabilities
 
@@ -28,6 +33,9 @@ These packages cover the common building blocks used across layered applications
 - unit-of-work abstractions
 - generic application service contracts and implementations
 - typed base exceptions and HTTP exceptions
+- event-envelope, publisher, and handler contracts
+- RabbitMQ event publishing and listener infrastructure
+- Keycloak authentication helpers, admin API models, and identity event payloads
 
 ## Package Overview
 
@@ -52,6 +60,19 @@ Provides reusable base entity types such as:
 - `BaseEntityUser<TKey>`
 - `BaseEntityUserWithMeta<TKey, TUserKey>`
 - `BaseEntityUserWithMetaSoftDelete<TKey, TUserKey>`
+
+### `alaasmagi.Base.Domain.Identity`
+
+Provides ASP.NET Core Identity base types such as:
+
+- `BaseIdentityUser<TKey>`
+- `BaseIdentityUserWithMeta<TKey>`
+- `BaseIdentityUserWithMetaSoftDelete<TKey>`
+- `BaseIdentityUserWithMetaSoftDeleteConcurrency<TKey>`
+- `BaseIdentityRole<TKey>`
+- `BaseIdentityRoleWithMeta<TKey>`
+- `BaseIdentityRoleWithMetaSoftDelete<TKey>`
+- `BaseIdentityRoleWithMetaSoftDeleteConcurrency<TKey>`
 
 ### `alaasmagi.Base.Contracts.DTO`
 
@@ -118,6 +139,42 @@ Provides:
 - `BaseException<TCode>`
 - `HttpException`
 - `HttpException<TCode>`
+
+### `alaasmagi.Base.Contracts.Message`
+
+Defines:
+
+- `IBaseEventEnvelope<TTimestamp>`
+- `IBaseEventPublisher`
+- `IBaseEventHandler<TEvent>`
+
+### `alaasmagi.Base.Message`
+
+Provides:
+
+- `BaseEventEnvelope<TTimestamp>`
+- `DefaultMessageTypes`
+- event-handler dependency injection helpers
+
+### `alaasmagi.Base.Message.RabbitMQ`
+
+Provides:
+
+- `RabbitMqOptions`
+- `RabbitMqConnectionManager`
+- `RabbitMqEventPublisher`
+- `RabbitMqListenerBase<TEvent>`
+- RabbitMQ publisher dependency injection helpers
+
+### `alaasmagi.Base.Keycloak`
+
+Provides:
+
+- Keycloak JWT bearer authentication registration
+- Keycloak OpenID Connect authentication registration
+- Keycloak role claim transformation
+- Keycloak admin API options, client, user models, and role models
+- identity lifecycle and action event payloads
 
 ## Typical Usage
 
@@ -198,12 +255,22 @@ All packages in this repository currently target:
 
 - `.NET 10.0`
 
+All package projects currently declare:
+
+- version `1.1.4`
+
 Relevant package dependencies used across the set include:
 
+- `Duende.AccessTokenManagement.OpenIdConnect`
+- `Microsoft.AspNetCore.Authentication`
+- `Microsoft.AspNetCore.Authentication.JwtBearer`
+- `Microsoft.AspNetCore.Authentication.OpenIdConnect`
+- `Microsoft.AspNetCore.Identity.EntityFrameworkCore`
 - `Microsoft.EntityFrameworkCore`
-- `Microsoft.Extensions.Caching.StackExchangeRedis`
-- `Sentry`
-- `Sentry.AspNetCore`
+- `Microsoft.Extensions.DependencyInjection`
+- `Microsoft.Extensions.Hosting`
+- `Microsoft.Extensions.Logging`
+- `RabbitMQ.Client`
 
 ## Notes
 
@@ -213,3 +280,5 @@ Relevant package dependencies used across the set include:
 - Repository and service methods return `IMethodResponse<T>` so calling code can handle success and failure consistently.
 - Metadata timestamps and actor fields are populated automatically by the EF repository base classes when supported by the entity type.
 - User-based scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is supplied.
+- Message packages use event envelopes with topic-style event type names and optional RabbitMQ transport support.
+- Keycloak helpers cover authentication registration, role claim transformation, admin user operations, and identity email/lifecycle event payloads.

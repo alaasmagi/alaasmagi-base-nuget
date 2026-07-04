@@ -5,12 +5,16 @@ Reusable base-layer packages for .NET applications built around a layered archit
 This repository contains the source for the `alaasmagi.Base.*` package set. The packages provide shared contracts and base implementations for:
 
 - domain entities
+- ASP.NET Core Identity base entities
 - DTO and mapper abstractions
 - method-response and error models
 - repositories and unit of work
 - EF Core data access
 - application services
 - typed exceptions
+- event messaging contracts and helpers
+- RabbitMQ event transport support
+- Keycloak authentication, admin API models, and identity event payloads
 
 ## Packages
 
@@ -18,6 +22,7 @@ The repository currently contains these NuGet packages:
 
 - `alaasmagi.Base.Contracts.Domain`
 - `alaasmagi.Base.Domain`
+- `alaasmagi.Base.Domain.Identity`
 - `alaasmagi.Base.Contracts.DTO`
 - `alaasmagi.Base.DTO`
 - `alaasmagi.Base.Contracts.DataAccess`
@@ -26,8 +31,12 @@ The repository currently contains these NuGet packages:
 - `alaasmagi.Base.Application`
 - `alaasmagi.Base.Contracts.Exception`
 - `alaasmagi.Base.Exception`
+- `alaasmagi.Base.Contracts.Message`
+- `alaasmagi.Base.Message`
+- `alaasmagi.Base.Message.RabbitMQ`
+- `alaasmagi.Base.Keycloak`
 
-All projects currently target `.NET 10.0`.
+All projects currently target `.NET 10.0` and declare version `1.1.4`.
 
 ## What Each Package Does
 
@@ -35,6 +44,7 @@ All projects currently target `.NET 10.0`.
 
 - `Base.Contracts.Domain` defines entity contracts such as `IBaseEntity<TKey>`, `IBaseEntityMeta`, `IBaseEntitySoftDelete`, and `IBaseEntityUserId<TKey>`.
 - `Base.Domain` provides base classes such as `BaseEntity<TKey>`, `BaseEntityWithMeta<TKey>`, `BaseEntityWithMetaSoftDelete<TKey>`, `BaseEntityUserWithMeta<TKey, TUserKey>`, and `BaseEntityUserWithMetaSoftDelete<TKey, TUserKey>`.
+- `Base.Domain.Identity` provides ASP.NET Core Identity user and role base classes with metadata, soft delete, and concurrency variants.
 
 ### DTO
 
@@ -55,6 +65,17 @@ All projects currently target `.NET 10.0`.
 
 - `Base.Contracts.Exception` defines `IBaseException` and `IHttpException`.
 - `Base.Exception` provides `BaseException` and `HttpException`.
+
+### Messaging
+
+- `Base.Contracts.Message` defines event-envelope, publisher, and handler contracts.
+- `Base.Message` provides base event envelopes, default event type names, and event-handler registration helpers.
+- `Base.Message.RabbitMQ` provides RabbitMQ options, connection management, event publishing, listener base support, and publisher registration helpers.
+
+### Keycloak
+
+- `Base.Keycloak` provides JWT bearer and OpenID Connect registration helpers for Keycloak.
+- `Base.Keycloak` also provides role claim transformation, admin API models/client helpers, and identity lifecycle/action event payloads.
 
 ## Typical Flow
 
@@ -137,3 +158,5 @@ public class TodoRepository
 - Metadata fields such as `CreatedAt`, `UpdatedAt`, `CreatedBy`, and `UpdatedBy` are managed by the EF repository base classes when the entity supports metadata.
 - User scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is provided.
 - Soft-delete operations are available through the `SoftDelete` repository and service variants.
+- Messaging packages provide contracts and reusable RabbitMQ infrastructure for topic-based event workflows.
+- Keycloak helpers are intended for ASP.NET Core applications that need Keycloak authentication, role claims, admin user operations, or identity event payloads.
