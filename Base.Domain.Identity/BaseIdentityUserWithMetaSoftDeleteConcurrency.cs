@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Base.Contracts.Domain;
 
-namespace Base.Domain;
+namespace Base.Domain.Identity;
 
 /// <summary>
 /// Provides an ASP.NET Core Identity user base type with metadata, soft-delete support, a repository-managed concurrency token, and a <see cref="Guid"/> identifier.

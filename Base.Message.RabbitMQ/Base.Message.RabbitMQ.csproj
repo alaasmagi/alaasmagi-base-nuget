@@ -6,20 +6,22 @@
         <Version>1.1.4</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
-        <PackageId>alaasmagi.Base.Contracts.Domain</PackageId>
-        <Description>Base Contracts Domain package for .NET webapps</Description>
+        <PackageId>alaasmagi.Base.Message.RabbitMQ</PackageId>
+        <Description>Base Message RabbitMQ package for .NET webapps</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Base.Contracts.Domain</RootNamespace>
+        <RootNamespace>Base.Message.RabbitMQ</RootNamespace>
         <PackageReadmeFile>Base.NuGet.README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
+      <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="..\Base.NuGet.README.md" Pack="true" PackagePath="\" Visible="false" />
+      <ProjectReference Include="..\Base.Contracts.Message\Base.Contracts.Message.csproj" />
     </ItemGroup>
 
 </Project>

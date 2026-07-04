@@ -3,18 +3,18 @@
     <PropertyGroup>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <TargetFramework>net10.0</TargetFramework>
-        <Version>1.1.3</Version>
+        <Version>1.1.4</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
         <PackageId>alaasmagi.Base.Domain</PackageId>
         <Description>Base Domain package for .NET webapps</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Base.Domain</RootNamespace>
         <PackageReadmeFile>Base.NuGet.README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
     </ItemGroup>
 

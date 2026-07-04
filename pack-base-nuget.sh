@@ -15,6 +15,11 @@ projects=(
   "Base.Application/Base.Application.csproj"
   "Base.Contracts.Exception/Base.Contracts.Exception.csproj"
   "Base.Exception/Base.Exception.csproj"
+  "Base.Contracts.Message/Base.Contracts.Message.csproj"
+  "Base.Domain.Identity/Base.Domain.Identity.csproj"
+  "Base.Keycloak/Base.Keycloak.csproj"
+  "Base.Message/Base.Message.csproj"
+  "Base.Message.RabbitMQ/Base.Message.RabbitMQ.csproj"
 )
 
 for project in "${projects[@]}"; do

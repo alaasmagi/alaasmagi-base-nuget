@@ -1,20 +1,20 @@
 using System.ComponentModel.DataAnnotations;
 using Base.Contracts.Domain;
 
-namespace Base.Domain;
+namespace Base.Domain.Identity;
 
 /// <summary>
-/// Provides an ASP.NET Core Identity role base type with metadata and a <see cref="Guid"/> identifier.
+/// Provides an ASP.NET Core Identity user base type with metadata and a <see cref="Guid"/> identifier.
 /// </summary>
-public abstract class BaseIdentityRoleWithMeta : BaseIdentityRoleWithMeta<Guid>
+public abstract class BaseIdentityUserWithMeta : BaseIdentityUserWithMeta<Guid>
 {
 }
 
 /// <summary>
-/// Provides an ASP.NET Core Identity role base type with metadata and a strongly typed identifier.
+/// Provides an ASP.NET Core Identity user base type with metadata and a strongly typed identifier.
 /// </summary>
-/// <typeparam name="TKey">The identifier type of the identity role.</typeparam>
-public abstract class BaseIdentityRoleWithMeta<TKey> : BaseIdentityRole<TKey>, IBaseEntityWithMeta<TKey>
+/// <typeparam name="TKey">The identifier type of the identity user.</typeparam>
+public abstract class BaseIdentityUserWithMeta<TKey> : BaseIdentityUser<TKey>, IBaseEntityWithMeta<TKey>
     where TKey : IEquatable<TKey>
 {
     /// <summary>

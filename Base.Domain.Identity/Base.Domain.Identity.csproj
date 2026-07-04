@@ -6,16 +6,21 @@
         <Version>1.1.4</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
-        <PackageId>alaasmagi.Base.Contracts.Exception</PackageId>
-        <Description>Base Contracts Exception package for .NET webapps</Description>
+        <PackageId>alaasmagi.Base.Domain.Identity</PackageId>
+        <Description>Base Domain Identity package for .NET webapps</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Base.Contracts.Exception</RootNamespace>
+        <RootNamespace>Base.Domain.Identity</RootNamespace>
         <PackageReadmeFile>Base.NuGet.README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <None Include="..\Base.NuGet.README.md" Pack="true" PackagePath="\" Visible="false" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Base.Contracts.Domain\Base.Contracts.Domain.csproj" />
+      <ProjectReference Include="..\Base.Domain\Base.Domain.csproj" />
     </ItemGroup>
 
 </Project>

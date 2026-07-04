@@ -1,7 +1,7 @@
 using Base.Contracts.Domain;
 using Microsoft.AspNetCore.Identity;
 
-namespace Base.Domain;
+namespace Base.Domain.Identity;
 
 /// <summary>
 /// Provides an ASP.NET Core Identity role base type that uses <see cref="Guid"/> as the identifier type.

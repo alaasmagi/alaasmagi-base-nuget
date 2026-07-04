@@ -6,16 +6,20 @@
         <Version>1.1.4</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
-        <PackageId>alaasmagi.Base.Contracts.Exception</PackageId>
-        <Description>Base Contracts Exception package for .NET webapps</Description>
+        <PackageId>alaasmagi.Base.Message</PackageId>
+        <Description>Base Message package for .NET webapps</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Base.Contracts.Exception</RootNamespace>
+        <RootNamespace>Base.Message</RootNamespace>
         <PackageReadmeFile>Base.NuGet.README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <None Include="..\Base.NuGet.README.md" Pack="true" PackagePath="\" Visible="false" />
+      <ProjectReference Include="..\Base.Contracts.Message\Base.Contracts.Message.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     </ItemGroup>
 
 </Project>
