@@ -226,7 +226,7 @@ public class BaseService<TEntity, TDomainEntity, TRepository, TKey, TActor> : IB
         await ServiceUow.SaveChangesAsync();
         var persistedDomainEntity = repositoryResponse.Value;
 
-        if (!EqualityComparer<TKey>.Default.Equals(repositoryResponse.Value.Id, default!))
+        if (!EqualityComparer<TKey>.Default.Equals(repositoryResponse.Value!.Id, default!))
         {
             var refreshResponse = await ServiceRepository.GetByIdAsync(repositoryResponse.Value.Id, actor);
 
