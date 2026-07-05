@@ -257,7 +257,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.1.4`
+- version `1.1.6`
 
 Relevant package dependencies used across the set include:
 
@@ -282,3 +282,12 @@ Relevant package dependencies used across the set include:
 - User-based scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is supplied.
 - Message packages use event envelopes with topic-style event type names and optional RabbitMQ transport support.
 - Keycloak helpers cover authentication registration, role claim transformation, admin user operations, and identity email/lifecycle event payloads.
+
+## Developer
+
+Developed and maintained by Aleksander Laasmägi.
+
+- GitHub profile: [alaasmagi](https://github.com/alaasmagi)
+- LinkedIn profile: [alaasmagi](https://www.linkedin.com/in/alaasmagi/)
+- Email: [aleksander.laasmagi@gmail.com](mailto:aleksander.laasmagi@gmail.com)
+- Repository: [alaasmagi-base-nuget](https://github.com/alaasmagi/alaasmagi-base-nuget)
