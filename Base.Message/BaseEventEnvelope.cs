@@ -4,27 +4,50 @@ using Base.Contracts.Message;
 namespace Base.Message;
 
 /// <summary>
-/// Provides a base event envelope implementation that uses <see cref="DateTime"/> timestamps.
+/// Provides a base event envelope implementation that carries a strongly typed content payload and
+/// uses <see cref="DateTime"/> timestamps.
 /// </summary>
-public abstract class BaseEventEnvelope : BaseEventEnvelope<DateTime>
+/// <typeparam name="TContent">The content payload type carried by the event envelope.</typeparam>
+public class BaseEventEnvelope<TContent> : BaseEventEnvelope<TContent, DateTime>, IBaseEventEnvelope<TContent>
 {
 }
 
 /// <summary>
-/// Provides a base event envelope implementation with a strongly typed timestamp.
+/// Provides a base event envelope implementation that carries a strongly typed content payload with a
+/// strongly typed timestamp.
 /// </summary>
+/// <typeparam name="TContent">The content payload type carried by the event envelope.</typeparam>
 /// <typeparam name="TTimestamp">The timestamp type used by the event envelope.</typeparam>
-public abstract class BaseEventEnvelope<TTimestamp> : IBaseEventEnvelope<TTimestamp>
+public class BaseEventEnvelope<TContent, TTimestamp> : IBaseEventEnvelope<TContent, TTimestamp>
+
 {
     /// <summary>
-    /// Gets the event type identifier used to route or classify the message.
+    /// Gets and/or initializes the event type identifier used to classify the message.
     /// </summary>
-    [JsonPropertyName("eventType")]
-    public required string EventType { get; init; }
+    [JsonPropertyName("type")]
+    public required string Type { get; init; }
 
     /// <summary>
-    /// Gets the timestamp associated with the event.
+    /// Gets and/or initializes the event source identifier used to define the source service of the message.
+    /// </summary>
+    [JsonPropertyName("source")]
+    public required string Source { get; init; }
+    
+    /// <summary>
+    /// Gets and/or initializes the event type identifier used classify the goal the message.
+    /// </summary>
+    [JsonPropertyName("action")]
+    public required string Action { get; init; }
+    
+    /// <summary>
+    /// Gets and/or initializes the timestamp associated with the event.
     /// </summary>
     [JsonPropertyName("timestamp")]
     public required TTimestamp Timestamp { get; init; }
+    
+    /// <summary>
+    /// Gets and/or initializes the content payload associated with the event.
+    /// </summary>
+    [JsonPropertyName("content")]
+    public required TContent Content { get; init; }
 }

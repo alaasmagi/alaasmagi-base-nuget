@@ -6,13 +6,15 @@ using RabbitMQ.Client;
 namespace Base.Message.RabbitMQ;
 
 /// <summary>
-/// Publishes base event envelopes to a RabbitMQ topic exchange.
+/// Publishes base event envelopes to a RabbitMQ topic exchange as persistent messages with publisher confirmations.
 /// </summary>
-public class RabbitMqEventPublisher : IBaseEventPublisher
+public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
 {
     private readonly RabbitMqConnectionManager _connectionManager;
     private readonly RabbitMqOptions _options;
     private readonly ILogger<RabbitMqEventPublisher> _logger;
+    private readonly SemaphoreSlim _publishLock = new(1, 1);
+    private IChannel? _channel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RabbitMqEventPublisher"/> class.
@@ -34,19 +36,29 @@ public class RabbitMqEventPublisher : IBaseEventPublisher
     /// <param name="topic">The RabbitMQ routing key used to publish the event.</param>
     /// <param name="message">The event envelope to publish.</param>
     /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
-    /// <typeparam name="TEvent">The event envelope type being published.</typeparam>
+    /// <typeparam name="TContent">The content payload type carried by the event envelope.</typeparam>
     /// <returns>A task that represents the asynchronous publish operation.</returns>
-    public async Task PublishAsync<TEvent>(string topic, TEvent message, CancellationToken cancellationToken = default)
-        where TEvent : IBaseEventEnvelope
+    public async Task PublishAsync<TContent>(string topic, IBaseEventEnvelope<TContent> message,
+        CancellationToken cancellationToken = default)
     {
+        // A RabbitMQ channel is not thread-safe, so publishes are serialized on a single owned channel.
+        await _publishLock.WaitAsync(cancellationToken);
         try
         {
-            var channel = await _connectionManager.GetChannelAsync(cancellationToken);
-            var body = JsonSerializer.SerializeToUtf8Bytes(message);
+            var channel = await GetChannelAsync(cancellationToken);
+            var body = JsonSerializer.SerializeToUtf8Bytes(message, message.GetType());
+
+            var properties = new BasicProperties
+            {
+                Persistent = true,
+                ContentType = "application/json"
+            };
 
             await channel.BasicPublishAsync(
                 exchange: _options.Exchange,
                 routingKey: topic,
+                mandatory: false,
+                basicProperties: properties,
                 body: body,
                 cancellationToken: cancellationToken);
         }
@@ -55,5 +67,47 @@ public class RabbitMqEventPublisher : IBaseEventPublisher
             _logger.LogError(ex, "Failed to publish event with topic '{Topic}'", topic);
             throw;
         }
+        finally
+        {
+            _publishLock.Release();
+        }
+    }
+
+    private async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken)
+    {
+        if (_channel is { IsOpen: true })
+        {
+            return _channel;
+        }
+
+        if (_channel is not null)
+        {
+            await _channel.DisposeAsync();
+            _channel = null;
+        }
+
+        _channel = await _connectionManager.CreateChannelAsync(
+            new CreateChannelOptions(
+                publisherConfirmationsEnabled: true,
+                publisherConfirmationTrackingEnabled: true),
+            cancellationToken);
+
+        return _channel;
+    }
+
+    /// <summary>
+    /// Asynchronously releases the publisher channel.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous dispose operation.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        if (_channel is not null)
+        {
+            await _channel.DisposeAsync();
+            _channel = null;
+        }
+
+        _publishLock.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

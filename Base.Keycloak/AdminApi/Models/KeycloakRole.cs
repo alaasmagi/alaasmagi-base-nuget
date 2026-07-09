@@ -1,11 +1,12 @@
 using System.Text.Json.Serialization;
+using Base.Contracts.Keycloak;
 
 namespace Base.Keycloak.AdminApi.Models;
 
 /// <summary>
 /// Represents a Keycloak role payload returned by or sent to the admin API.
 /// </summary>
-public class KeycloakRole
+public class KeycloakRole : IKeycloakRole
 {
     /// <summary>
     /// Gets the Keycloak role identifier.
@@ -19,3 +20,4 @@ public class KeycloakRole
     [JsonPropertyName("name")]
     public required string Name { get; init; }
 }
+

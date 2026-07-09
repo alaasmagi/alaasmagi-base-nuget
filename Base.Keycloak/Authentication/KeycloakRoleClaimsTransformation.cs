@@ -1,8 +1,8 @@
-namespace Base.Keycloak.Authentication;
-
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
+
+namespace Base.Keycloak.Authentication;
 
 /// <summary>
 /// Adds Keycloak realm and client roles to the principal as standard role claims.

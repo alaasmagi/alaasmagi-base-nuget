@@ -1,10 +1,10 @@
-namespace Base.Keycloak.Authentication;
-
 using Duende.AccessTokenManagement.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.DependencyInjection;
+
+namespace Base.Keycloak.Authentication;
 
 /// <summary>
 /// Provides dependency injection helpers for Keycloak OpenID Connect authentication.

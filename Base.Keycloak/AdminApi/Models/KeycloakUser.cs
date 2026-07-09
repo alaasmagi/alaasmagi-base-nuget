@@ -1,11 +1,12 @@
-namespace Base.Keycloak.AdminApi.Models;
-
 using System.Text.Json.Serialization;
+using Base.Contracts.Keycloak;
+
+namespace Base.Keycloak.AdminApi.Models;
 
 /// <summary>
 /// Represents a Keycloak user payload returned by or sent to the admin API.
 /// </summary>
-public class KeycloakUser
+public class KeycloakUser : IKeycloakUser
 {
     /// <summary>
     /// Gets the Keycloak user identifier.
@@ -37,3 +38,4 @@ public class KeycloakUser
     [JsonPropertyName("emailVerified")]
     public bool EmailVerified { get; init; }
 }
+

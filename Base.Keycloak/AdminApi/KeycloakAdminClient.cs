@@ -1,4 +1,7 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
+using Base.Contracts.Keycloak;
 using Base.Keycloak.AdminApi.Models;
 
 namespace Base.Keycloak.AdminApi;
@@ -6,10 +9,11 @@ namespace Base.Keycloak.AdminApi;
 /// <summary>
 /// Provides a small client for common Keycloak admin user operations.
 /// </summary>
-public class KeycloakAdminClient
+public class KeycloakAdminClient : IKeycloakAdminClient
 {
     private readonly HttpClient _httpClient;
     private readonly KeycloakAdminOptions _options;
+    private readonly SemaphoreSlim _tokenLock = new(1, 1);
     private string? _cachedToken;
     private DateTimeOffset _tokenExpiresAt;
 
@@ -22,6 +26,11 @@ public class KeycloakAdminClient
     {
         _httpClient = httpClient;
         _options = options;
+
+        if (_httpClient.BaseAddress is null && !string.IsNullOrWhiteSpace(_options.BaseUrl))
+        {
+            _httpClient.BaseAddress = new Uri(_options.BaseUrl, UriKind.Absolute);
+        }
     }
 
     /// <summary>
@@ -30,12 +39,13 @@ public class KeycloakAdminClient
     /// <param name="user">The user payload to create.</param>
     /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
     /// <returns>A task that resolves to the created user identifier, or <see langword="null"/> when it cannot be read.</returns>
-    public async Task<string?> CreateUserAsync(KeycloakUser user, CancellationToken cancellationToken = default)
+    public async Task<string?> CreateUserAsync(IKeycloakUser user, CancellationToken cancellationToken = default)
     {
-        await EnsureAuthenticatedAsync(cancellationToken);
+        using var request = await CreateAuthenticatedRequestAsync(
+            HttpMethod.Post, $"admin/realms/{_options.Realm}/users", cancellationToken);
+        request.Content = JsonContent.Create(user, user.GetType());
 
-        var response = await _httpClient.PostAsJsonAsync(
-            $"/admin/realms/{_options.Realm}/users", user, cancellationToken);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var location = response.Headers.Location?.ToString();
@@ -50,10 +60,10 @@ public class KeycloakAdminClient
     /// <returns>A task that represents the asynchronous delete operation.</returns>
     public async Task DeleteUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        await EnsureAuthenticatedAsync(cancellationToken);
+        using var request = await CreateAuthenticatedRequestAsync(
+            HttpMethod.Delete, $"admin/realms/{_options.Realm}/users/{userId}", cancellationToken);
 
-        var response = await _httpClient.DeleteAsync(
-            $"/admin/realms/{_options.Realm}/users/{userId}", cancellationToken);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 
@@ -63,12 +73,12 @@ public class KeycloakAdminClient
     /// <param name="userId">The Keycloak user identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
     /// <returns>A task that resolves to the matching user, or <see langword="null"/> when Keycloak does not return a successful response.</returns>
-    public async Task<KeycloakUser?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<IKeycloakUser?> GetUserByIdAsync(string userId, CancellationToken cancellationToken = default)
     {
-        await EnsureAuthenticatedAsync(cancellationToken);
+        using var request = await CreateAuthenticatedRequestAsync(
+            HttpMethod.Get, $"admin/realms/{_options.Realm}/users/{userId}", cancellationToken);
 
-        var response = await _httpClient.GetAsync(
-            $"/admin/realms/{_options.Realm}/users/{userId}", cancellationToken);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -78,39 +88,60 @@ public class KeycloakAdminClient
         return await response.Content.ReadFromJsonAsync<KeycloakUser>(cancellationToken);
     }
 
-    private async Task EnsureAuthenticatedAsync(CancellationToken cancellationToken)
+    private async Task<HttpRequestMessage> CreateAuthenticatedRequestAsync(
+        HttpMethod method, string relativeUri, CancellationToken cancellationToken)
+    {
+        var token = await GetAccessTokenAsync(cancellationToken);
+        var request = new HttpRequestMessage(method, relativeUri);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return request;
+    }
+
+    private async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
     {
         if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
         {
-            return;
+            return _cachedToken;
         }
 
-        var tokenResponse = await _httpClient.PostAsync(
-            $"/realms/{_options.Realm}/protocol/openid-connect/token",
-            new FormUrlEncodedContent(new Dictionary<string, string>
+        await _tokenLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
             {
-                ["grant_type"] = "client_credentials",
-                ["client_id"] = _options.ClientId,
-                ["client_secret"] = _options.ClientSecret
-            }),
-            cancellationToken);
+                return _cachedToken;
+            }
 
-        tokenResponse.EnsureSuccessStatusCode();
+            using var tokenResponse = await _httpClient.PostAsync(
+                $"realms/{_options.Realm}/protocol/openid-connect/token",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["grant_type"] = "client_credentials",
+                    ["client_id"] = _options.ClientId,
+                    ["client_secret"] = _options.ClientSecret
+                }),
+                cancellationToken);
 
-        var tokenData = await tokenResponse.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken);
-        _cachedToken = tokenData!.AccessToken;
-        _tokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(tokenData.ExpiresIn - 30);
+            tokenResponse.EnsureSuccessStatusCode();
 
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
+            var tokenData = await tokenResponse.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken);
+            _cachedToken = tokenData!.AccessToken;
+            _tokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(tokenData.ExpiresIn - 30);
+
+            return _cachedToken;
+        }
+        finally
+        {
+            _tokenLock.Release();
+        }
     }
 
     private class TokenResponse
     {
-        [System.Text.Json.Serialization.JsonPropertyName("access_token")]
+        [JsonPropertyName("access_token")]
         public required string AccessToken { get; init; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("expires_in")]
+        [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; init; }
     }
 }

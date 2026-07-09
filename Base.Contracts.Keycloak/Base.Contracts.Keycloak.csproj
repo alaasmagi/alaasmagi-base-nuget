@@ -6,22 +6,13 @@
         <Version>1.1.7</Version>
         <Authors>Aleksander Laasmägi</Authors>
         <Company>alaasmagi</Company>
-        <PackageId>alaasmagi.Base.Domain.Identity</PackageId>
-        <Description>Base Domain Identity package for .NET webapps</Description>
+        <PackageId>alaasmagi.Base.Contracts.Keycloak</PackageId>
+        <Description>Base Contracts Keycloak package for .NET webapps</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Base.Domain.Identity</RootNamespace>
+        <RootNamespace>Base.Contracts.Keycloak</RootNamespace>
         <PackageReadmeFile>Base.NuGet.README.md</PackageReadmeFile>
     </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Base.Contracts.Domain\Base.Contracts.Domain.csproj" />
-      <ProjectReference Include="..\Base.Domain\Base.Domain.csproj" />
-    </ItemGroup>
 
     <ItemGroup>
       <None Include="..\Base.NuGet.README.md" Pack="true" PackagePath="\" Visible="false" />

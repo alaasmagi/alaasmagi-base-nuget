@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace Base.Keycloak.Payloads;
+namespace Base.Keycloak.Events;
 
 /// <summary>
-/// Represents the payload for a verify-email action.
+/// Represents the <c>content</c> payload of a Keycloak verify-email event (<c>user.verify</c>).
 /// </summary>
-public class VerifyEmailPayload
+public class VerifyEmailContent
 {
     /// <summary>
     /// Gets the Keycloak user identifier.
@@ -20,19 +20,25 @@ public class VerifyEmailPayload
     public required string Email { get; init; }
 
     /// <summary>
-    /// Gets the email verification link.
+    /// Gets the user's full name.
     /// </summary>
-    [JsonPropertyName("verifyLink")]
-    public required string VerifyLink { get; init; }
+    [JsonPropertyName("fullName")]
+    public required string FullName { get; init; }
 
     /// <summary>
-    /// Gets the expiration timestamp for the verification link.
+    /// Gets the Keycloak action link the user follows to verify their email address.
+    /// </summary>
+    [JsonPropertyName("actionLink")]
+    public required string ActionLink { get; init; }
+
+    /// <summary>
+    /// Gets the expiration timestamp for the action link.
     /// </summary>
     [JsonPropertyName("expiresAt")]
-    public required string ExpiresAt { get; init; }
+    public required DateTimeOffset ExpiresAt { get; init; }
 
     /// <summary>
-    /// Gets the number of minutes until the verification link expires.
+    /// Gets the number of minutes until the action link expires.
     /// </summary>
     [JsonPropertyName("expiresInMinutes")]
     public int ExpiresInMinutes { get; init; }
@@ -43,3 +49,4 @@ public class VerifyEmailPayload
     [JsonPropertyName("locale")]
     public string? Locale { get; init; }
 }
+

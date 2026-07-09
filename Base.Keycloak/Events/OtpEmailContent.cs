@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace Base.Keycloak.Payloads;
+namespace Base.Keycloak.Events;
 
 /// <summary>
-/// Represents the payload for a one-time password email action.
+/// Represents the <c>content</c> payload of a Keycloak one-time password event (<c>user.2fa.otp</c>).
 /// </summary>
-public class OtpPayload
+public class OtpEmailContent
 {
     /// <summary>
     /// Gets the Keycloak user identifier.
@@ -20,6 +20,12 @@ public class OtpPayload
     public required string Email { get; init; }
 
     /// <summary>
+    /// Gets the user's full name.
+    /// </summary>
+    [JsonPropertyName("fullName")]
+    public required string FullName { get; init; }
+
+    /// <summary>
     /// Gets the one-time password code.
     /// </summary>
     [JsonPropertyName("otpCode")]
@@ -29,7 +35,7 @@ public class OtpPayload
     /// Gets the expiration timestamp for the one-time password.
     /// </summary>
     [JsonPropertyName("expiresAt")]
-    public required string ExpiresAt { get; init; }
+    public required DateTimeOffset ExpiresAt { get; init; }
 
     /// <summary>
     /// Gets the number of minutes until the one-time password expires.
@@ -43,3 +49,4 @@ public class OtpPayload
     [JsonPropertyName("locale")]
     public string? Locale { get; init; }
 }
+

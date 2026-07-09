@@ -9,6 +9,7 @@ projects=(
   "Base.Contracts.DTO/Base.Contracts.DTO.csproj"
   "Base.Contracts.DataAccess/Base.Contracts.DataAccess.csproj"
   "Base.Contracts.Application/Base.Contracts.Application.csproj"
+  "Base.Contracts.Keycloak/Base.Contracts.Keycloak.csproj"
   "Base.Domain/Base.Domain.csproj"
   "Base.DTO/Base.DTO.csproj"
   "Base.DataAccess.EF/Base.DataAccess.EF.csproj"

@@ -1,8 +1,8 @@
-namespace Base.Keycloak.Authentication;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+
+namespace Base.Keycloak.Authentication;
 
 /// <summary>
 /// Provides dependency injection helpers for Keycloak JWT bearer authentication.

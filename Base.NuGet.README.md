@@ -144,16 +144,27 @@ Provides:
 
 Defines:
 
-- `IBaseEventEnvelope<TTimestamp>`
+- `IBaseEventEnvelope<TContent>`
+- `IBaseEventEnvelope<TContent, TTimestamp>`
 - `IBaseEventPublisher`
-- `IBaseEventHandler<TEvent>`
+- `IBaseEventHandler<TContent>`
+- `IBaseEventDispatcher<TContent>`
+
+### `alaasmagi.Base.Contracts.Keycloak`
+
+Defines the Keycloak service and data abstractions:
+
+- `IKeycloakAdminClient`
+- `IKeycloakUser`, `IKeycloakRole`
 
 ### `alaasmagi.Base.Message`
 
 Provides:
 
-- `BaseEventEnvelope<TTimestamp>`
+- `BaseEventEnvelope<TContent>`
+- `BaseEventEnvelope<TContent, TTimestamp>`
 - `DefaultMessageTypes`
+- `DefaultMessageActions`
 - event-handler dependency injection helpers
 
 ### `alaasmagi.Base.Message.RabbitMQ`
@@ -163,8 +174,8 @@ Provides:
 - `RabbitMqOptions`
 - `RabbitMqConnectionManager`
 - `RabbitMqEventPublisher`
-- `RabbitMqListenerBase<TEvent>`
-- RabbitMQ publisher dependency injection helpers
+- `RabbitMqConsumerBase<TContent>`
+- RabbitMQ publisher and consumer dependency injection helpers
 
 ### `alaasmagi.Base.Keycloak`
 
@@ -173,8 +184,13 @@ Provides:
 - Keycloak JWT bearer authentication registration
 - Keycloak OpenID Connect authentication registration
 - Keycloak role claim transformation
-- Keycloak admin API options, client, user models, and role models
-- identity lifecycle and action event payloads
+- Keycloak admin API options and a typed `IKeycloakAdminClient` implementation
+- `KeycloakUser` and `KeycloakRole` admin models
+- identity event content payloads matching the message schema:
+  - `UserEventContent` (`user.created`, `user.deleted`, `user.updated`, `user.enabled`, `user.disabled`)
+  - `VerifyEmailContent` (`user.verify`)
+  - `OtpEmailContent` (`user.2fa.otp`)
+  - `PasswordResetContent` (`user.password.reset`)
 
 ## Typical Usage
 
@@ -257,7 +273,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.1.6`
+- version `1.1.7`
 
 Relevant package dependencies used across the set include:
 
