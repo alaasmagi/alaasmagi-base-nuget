@@ -6,7 +6,7 @@ using RabbitMQ.Client;
 namespace Base.Message.RabbitMQ;
 
 /// <summary>
-/// Publishes base event envelopes to a RabbitMQ topic exchange as persistent messages with publisher confirmations.
+/// Publishes base event envelopes to a RabbitMQ exchange as persistent messages with publisher confirmations.
 /// </summary>
 public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
 {
@@ -19,10 +19,9 @@ public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="RabbitMqEventPublisher"/> class.
     /// </summary>
-    /// <param name="connectionManager">The RabbitMQ connection manager used to acquire a channel.</param>
-    /// <param name="options">The RabbitMQ connection and exchange settings.</param>
-    /// <param name="logger">The logger used to report publish failures.</param>
-    public RabbitMqEventPublisher(RabbitMqConnectionManager connectionManager, RabbitMqOptions options,
+    public RabbitMqEventPublisher(
+        RabbitMqConnectionManager connectionManager,
+        RabbitMqOptions options,
         ILogger<RabbitMqEventPublisher> logger)
     {
         _connectionManager = connectionManager;
@@ -33,14 +32,17 @@ public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
     /// <summary>
     /// Publishes an event envelope to RabbitMQ using the topic as the routing key.
     /// </summary>
-    /// <param name="topic">The RabbitMQ routing key used to publish the event.</param>
-    /// <param name="message">The event envelope to publish.</param>
-    /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
-    /// <typeparam name="TContent">The content payload type carried by the event envelope.</typeparam>
-    /// <returns>A task that represents the asynchronous publish operation.</returns>
-    public async Task PublishAsync<TContent>(string topic, IBaseEventEnvelope<TContent> message,
+    public async Task PublishAsync<TContent>(
+        string topic,
+        IBaseEventEnvelope<TContent> message,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(_options.Exchange))
+        {
+            throw new InvalidOperationException(
+                "RabbitMQ publishing requires RabbitMqOptions.Exchange to be configured.");
+        }
+
         // A RabbitMQ channel is not thread-safe, so publishes are serialized on a single owned channel.
         await _publishLock.WaitAsync(cancellationToken);
         try
@@ -98,7 +100,6 @@ public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
     /// <summary>
     /// Asynchronously releases the publisher channel.
     /// </summary>
-    /// <returns>A task that represents the asynchronous dispose operation.</returns>
     public async ValueTask DisposeAsync()
     {
         if (_channel is not null)
@@ -108,6 +109,5 @@ public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
         }
 
         _publishLock.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

@@ -5,7 +5,7 @@ using RabbitMQ.Client;
 namespace Base.Message.RabbitMQ;
 
 /// <summary>
-/// Manages a single shared RabbitMQ connection and creates channels with the configured topic exchange declared.
+/// Manages a single shared RabbitMQ connection and creates channels.
 /// RabbitMQ channels are not thread-safe, so each publisher and consumer owns its own channel created here.
 /// </summary>
 public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
@@ -87,7 +87,7 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
     }
 
     /// <summary>
-    /// Creates a new channel on the shared connection and declares the configured durable topic exchange.
+    /// Creates a new channel on the shared connection and declares the configured exchange when enabled.
     /// The caller owns the returned channel and is responsible for disposing it.
     /// </summary>
     /// <param name="options">Optional channel creation options, for example to enable publisher confirmations.</param>
@@ -100,12 +100,15 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
         var connection = await GetConnectionAsync(cancellationToken);
         var channel = await connection.CreateChannelAsync(options, cancellationToken);
 
-        await channel.ExchangeDeclareAsync(
-            exchange: _options.Exchange,
-            type: ExchangeType.Topic,
-            durable: true,
-            autoDelete: false,
-            cancellationToken: cancellationToken);
+        if (_options.DeclareExchange && !string.IsNullOrWhiteSpace(_options.Exchange))
+        {
+            await channel.ExchangeDeclareAsync(
+                exchange: _options.Exchange,
+                type: _options.ExchangeType,
+                durable: _options.ExchangeDurable,
+                autoDelete: _options.ExchangeAutoDelete,
+                cancellationToken: cancellationToken);
+        }
 
         return channel;
     }
@@ -123,7 +126,6 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
         }
 
         _connectionLock.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -132,7 +134,7 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
     public void Dispose()
     {
         _connection?.Dispose();
+        _connection = null;
         _connectionLock.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

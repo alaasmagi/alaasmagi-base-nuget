@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-
 namespace Base.Message.RabbitMQ;
 
 /// <summary>
@@ -25,12 +24,6 @@ public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
     /// <summary>
     /// Initializes a new instance of the <see cref="RabbitMqConsumerBase{TContent}"/> class.
     /// </summary>
-    /// <param name="connectionManager">The RabbitMQ connection manager used to acquire a channel.</param>
-    /// <param name="options">The RabbitMQ connection and exchange settings.</param>
-    /// <param name="handler">The handler that processes deserialized events.</param>
-    /// <param name="logger">The logger used to report message processing failures.</param>
-    /// <param name="queueName">The queue name to declare and consume from.</param>
-    /// <param name="routingKeyPatterns">The routing key patterns to bind to the configured exchange.</param>
     protected RabbitMqConsumerBase(
         RabbitMqConnectionManager connectionManager,
         RabbitMqOptions options,
@@ -56,8 +49,6 @@ public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
     /// <summary>
     /// Declares the queue bindings and starts consuming RabbitMQ messages until the service is stopped.
     /// </summary>
-    /// <param name="stoppingToken">A token that is triggered when the hosted service is stopping.</param>
-    /// <returns>A task that represents the lifetime of the background listener.</returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var channel = await _connectionManager.CreateChannelAsync(cancellationToken: stoppingToken);
@@ -73,10 +64,20 @@ public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
 
             foreach (var pattern in _routingKeyPatterns)
             {
+                if (string.IsNullOrWhiteSpace(_options.Exchange))
+                {
+                    throw new InvalidOperationException(
+                        "RabbitMQ routing key bindings require RabbitMqOptions.Exchange to be configured. " +
+                        "Omit routing key patterns for queue-only/default-exchange consumers.");
+                }
+
                 await channel.QueueBindAsync(_queueName, _options.Exchange, pattern, cancellationToken: stoppingToken);
             }
 
-            await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: PrefetchCount, global: false,
+            await channel.BasicQosAsync(
+                prefetchSize: 0,
+                prefetchCount: PrefetchCount,
+                global: false,
                 cancellationToken: stoppingToken);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
@@ -98,9 +99,11 @@ public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
                 {
                     _logger.LogError(ex, "Failed to process message from queue '{Queue}'", _queueName);
 
-                    // Do not requeue: a message that always fails would be redelivered in a tight loop.
-                    // Configure a dead-letter exchange on the queue to capture these messages for inspection.
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, stoppingToken);
+                    await channel.BasicNackAsync(
+                        ea.DeliveryTag,
+                        multiple: false,
+                        requeue: false,
+                        stoppingToken);
                 }
             };
 
