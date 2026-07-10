@@ -39,7 +39,7 @@ public class RabbitMqOptions
     /// <summary>
     /// Gets the exchange type to declare when <see cref="Exchange"/> is configured.
     /// </summary>
-    public string ExchangeType { get; init; } = RabbitMQ.Client.ExchangeType.Topic;
+    public string ExchangeType { get; init; } = global::RabbitMQ.Client.ExchangeType.Topic;
 
     /// <summary>
     /// Gets a value indicating whether the configured exchange should be declared by this library.
