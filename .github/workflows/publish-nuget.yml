@@ -9,6 +9,9 @@ jobs:
   publish:
     if: contains(join(github.event.commits.*.message, ' '), '[NUGET_PUBLISH]')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -46,9 +49,7 @@ jobs:
             dotnet restore "$project"
           done
 
-      - name: Pack and publish NuGet packages
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      - name: Pack NuGet packages
         run: |
           set -euo pipefail
 
@@ -71,11 +72,61 @@ jobs:
             "Base.Message.RabbitMQ/Base.Message.RabbitMQ.csproj"
           )
 
+          package_output_dir="$RUNNER_TEMP/nuget-packages"
+          mkdir -p "$package_output_dir"
+
           for project in "${projects[@]}"; do
-            dotnet pack "$project" -c Release --no-restore
+            dotnet pack "$project" -c Release --no-restore --output "$package_output_dir"
           done
 
-          find . -type f -name '*.nupkg' -not -name '*.symbols.nupkg' -print0 | while IFS= read -r -d '' package; do
+          mapfile -d '' -t packages < <(
+            find "$package_output_dir" -maxdepth 1 -type f -name '*.nupkg' -not -name '*.symbols.nupkg' -print0 | sort -z
+          )
+
+          if [[ ${#packages[@]} -eq 0 ]]; then
+            echo "::error::No NuGet packages were created."
+            exit 1
+          fi
+
+      - name: Validate NuGet trusted publishing configuration
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER || secrets.NUGET_USER }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${NUGET_USER:-}" ]]; then
+            echo "::error::Set NUGET_USER to your nuget.org profile name as a repository variable or secret."
+            exit 1
+          fi
+
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ vars.NUGET_USER || secrets.NUGET_USER }}
+
+      - name: Publish NuGet packages
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${NUGET_API_KEY:-}" ]]; then
+            echo "::error::NuGet trusted publishing did not return a temporary API key."
+            exit 1
+          fi
+
+          package_output_dir="$RUNNER_TEMP/nuget-packages"
+          mapfile -d '' -t packages < <(
+            find "$package_output_dir" -maxdepth 1 -type f -name '*.nupkg' -not -name '*.symbols.nupkg' -print0 | sort -z
+          )
+
+          if [[ ${#packages[@]} -eq 0 ]]; then
+            echo "::error::No NuGet packages were found to publish."
+            exit 1
+          fi
+
+          for package in "${packages[@]}"; do
             dotnet nuget push "$package" \
               --source https://api.nuget.org/v3/index.json \
               --api-key "$NUGET_API_KEY" \
