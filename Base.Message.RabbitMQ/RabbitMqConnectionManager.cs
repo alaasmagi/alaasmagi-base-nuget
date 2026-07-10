@@ -1,3 +1,4 @@
+using System.Net.Security;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
@@ -61,6 +62,18 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
                 AutomaticRecoveryEnabled = true,
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(5)
             };
+
+            if (_options.UseTls)
+            {
+                factory.Ssl = new SslOption
+                {
+                    Enabled = true,
+                    ServerName = _options.Host,
+                    AcceptablePolicyErrors = _options.AcceptInvalidTlsCertificate
+                        ? SslPolicyErrors.RemoteCertificateNameMismatch | SslPolicyErrors.RemoteCertificateChainErrors
+                        : SslPolicyErrors.None
+                };
+            }
 
             _connection = await factory.CreateConnectionAsync(cancellationToken);
             _logger.LogInformation("RabbitMQ connection established to '{Host}:{Port}'", _options.Host, _options.Port);

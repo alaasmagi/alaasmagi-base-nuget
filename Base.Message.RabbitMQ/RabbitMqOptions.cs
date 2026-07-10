@@ -34,4 +34,15 @@ public class RabbitMqOptions
     /// Gets the topic exchange used to publish and consume events.
     /// </summary>
     public required string Exchange { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether TLS (amqps) should be used for the connection.
+    /// </summary>
+    public bool UseTls { get; init; } = false;
+
+    /// <summary>
+    /// Gets a value indicating whether TLS certificate errors should be accepted.
+    /// Set to <c>true</c> when connecting to servers with self-signed certificates.
+    /// </summary>
+    public bool AcceptInvalidTlsCertificate { get; init; } = false;
 }

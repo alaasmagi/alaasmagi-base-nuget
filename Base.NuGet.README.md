@@ -273,7 +273,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.1.7`
+- version `1.1.8`
 
 Relevant package dependencies used across the set include:
 
