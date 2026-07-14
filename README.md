@@ -12,6 +12,7 @@ This repository contains the source for the `alaasmagi.Base.*` package set. The 
 - EF Core data access
 - application services
 - typed exceptions
+- key-value cache contracts and base implementations
 - event messaging contracts and helpers
 - RabbitMQ event transport support
 - Keycloak authentication, admin API models, and identity event payloads
@@ -31,6 +32,8 @@ The repository currently contains these NuGet packages:
 - `alaasmagi.Base.Application`
 - `alaasmagi.Base.Contracts.Exception`
 - `alaasmagi.Base.Exception`
+- `alaasmagi.Base.Contracts.Cache`
+- `alaasmagi.Base.Cache`
 - `alaasmagi.Base.Contracts.Message`
 - `alaasmagi.Base.Message`
 - `alaasmagi.Base.Message.RabbitMQ`
@@ -65,6 +68,11 @@ All projects currently target `.NET 10.0` and declare version `1.1.9`.
 
 - `Base.Contracts.Exception` defines `IBaseException` and `IHttpException`.
 - `Base.Exception` provides `BaseException` and `HttpException`.
+
+### Caching
+
+- `Base.Contracts.Cache` defines key-value cache, cache result, entry options, serializer, and key-builder contracts.
+- `Base.Cache` provides provider-neutral cache results, entry options, key building, JSON serialization, and a byte-backed `BaseCache` abstraction for Redis or other cache backends.
 
 ### Messaging
 
@@ -158,5 +166,6 @@ public class TodoRepository
 - Metadata fields such as `CreatedAt`, `UpdatedAt`, `CreatedBy`, and `UpdatedBy` are managed by the EF repository base classes when the entity supports metadata.
 - User scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is provided.
 - Soft-delete operations are available through the `SoftDelete` repository and service variants.
+- Cache packages define a provider-neutral abstraction; concrete Redis or other store implementations can inherit from `BaseCache`.
 - Messaging packages provide contracts and reusable RabbitMQ infrastructure for topic-based event workflows.
 - Keycloak helpers are intended for ASP.NET Core applications that need Keycloak authentication, role claims, admin user operations, or identity event payloads.

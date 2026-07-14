@@ -15,6 +15,8 @@ This package set provides shared contracts and generic implementations for commo
 - `alaasmagi.Base.Application`
 - `alaasmagi.Base.Contracts.Exception`
 - `alaasmagi.Base.Exception`
+- `alaasmagi.Base.Contracts.Cache`
+- `alaasmagi.Base.Cache`
 - `alaasmagi.Base.Contracts.Message`
 - `alaasmagi.Base.Message`
 - `alaasmagi.Base.Message.RabbitMQ`
@@ -33,6 +35,7 @@ These packages cover the common building blocks used across layered applications
 - unit-of-work abstractions
 - generic application service contracts and implementations
 - typed base exceptions and HTTP exceptions
+- key-value cache contracts and provider-neutral base implementations
 - event-envelope, publisher, and handler contracts
 - RabbitMQ event publishing and listener infrastructure
 - Keycloak authentication helpers, admin API models, and identity event payloads
@@ -139,6 +142,27 @@ Provides:
 - `BaseException<TCode>`
 - `HttpException`
 - `HttpException<TCode>`
+
+### `alaasmagi.Base.Contracts.Cache`
+
+Defines:
+
+- `IBaseCache`
+- `IBaseCacheResult<TValue>`
+- `IBaseCacheEntryOptions`
+- `IBaseCacheSerializer`
+- `IBaseCacheKeyBuilder`
+
+### `alaasmagi.Base.Cache`
+
+Provides:
+
+- `BaseCache`
+- `BaseCacheResult<TValue>`
+- `BaseCacheEntryOptions`
+- `BaseCacheOptions`
+- `BaseCacheKeyBuilder`
+- `BaseJsonCacheSerializer`
 
 ### `alaasmagi.Base.Contracts.Message`
 
@@ -296,6 +320,7 @@ Relevant package dependencies used across the set include:
 - Repository and service methods return `IMethodResponse<T>` so calling code can handle success and failure consistently.
 - Metadata timestamps and actor fields are populated automatically by the EF repository base classes when supported by the entity type.
 - User-based scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is supplied.
+- Cache packages provide string-keyed, typed value abstractions that can be backed by Redis or another key-value cache store.
 - Message packages use event envelopes with topic-style event type names and optional RabbitMQ transport support.
 - Keycloak helpers cover authentication registration, role claim transformation, admin user operations, and identity email/lifecycle event payloads.
 
