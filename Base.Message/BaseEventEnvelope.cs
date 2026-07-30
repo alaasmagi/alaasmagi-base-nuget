@@ -22,29 +22,41 @@ public class BaseEventEnvelope<TContent, TTimestamp> : IBaseEventEnvelope<TConte
 
 {
     /// <summary>
-    /// Gets and/or initializes the event type identifier used to classify the message.
+    /// Gets and/or initializes the unique message identifier (UUID) used as the idempotency key.
     /// </summary>
-    [JsonPropertyName("type")]
-    public required string Type { get; init; }
+    [JsonPropertyName("id")]
+    public required Guid Id { get; init; }
 
     /// <summary>
-    /// Gets and/or initializes the event source identifier used to define the source service of the message.
+    /// Gets and/or initializes the publisher of the message (single-segment lowercase slug).
     /// </summary>
     [JsonPropertyName("source")]
     public required string Source { get; init; }
-    
+
     /// <summary>
-    /// Gets and/or initializes the event type identifier used classify the goal the message.
+    /// Gets and/or initializes the subject the message concerns (the Keycloak realm name).
+    /// </summary>
+    [JsonPropertyName("tenant")]
+    public required string Tenant { get; init; }
+
+    /// <summary>
+    /// Gets and/or initializes what happened or what to send (single hyphenated segment).
     /// </summary>
     [JsonPropertyName("action")]
     public required string Action { get; init; }
-    
+
     /// <summary>
     /// Gets and/or initializes the timestamp associated with the event.
     /// </summary>
     [JsonPropertyName("timestamp")]
     public required TTimestamp Timestamp { get; init; }
-    
+
+    /// <summary>
+    /// Gets and/or initializes the schema version of the content payload as a <c>"major.minor"</c> string.
+    /// </summary>
+    [JsonPropertyName("contentVersion")]
+    public required string ContentVersion { get; init; }
+
     /// <summary>
     /// Gets and/or initializes the content payload associated with the event.
     /// </summary>

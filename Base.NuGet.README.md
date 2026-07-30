@@ -187,8 +187,11 @@ Provides:
 
 - `BaseEventEnvelope<TContent>`
 - `BaseEventEnvelope<TContent, TTimestamp>`
-- `DefaultMessageTypes`
 - `DefaultMessageActions`
+- `DefaultMessageSources`
+- `DefaultExchanges`
+- `BaseRoutingKey`
+- `BaseContentVersion`
 - event-handler dependency injection helpers
 
 ### `alaasmagi.Base.Message.RabbitMQ`
@@ -211,10 +214,10 @@ Provides:
 - Keycloak admin API options and a typed `IKeycloakAdminClient` implementation
 - `KeycloakUser` and `KeycloakRole` admin models
 - identity event content payloads matching the message schema:
-  - `UserEventContent` (`user.created`, `user.deleted`, `user.updated`, `user.enabled`, `user.disabled`)
-  - `VerifyEmailContent` (`user.verify`)
-  - `OtpEmailContent` (`user.2fa.otp`)
-  - `PasswordResetContent` (`user.password.reset`)
+  - `UserEventContent` (`user-created`, `user-deleted`, `user-updated`, `user-enabled`, `user-disabled`)
+  - `VerifyEmailContent` (`user-verify`)
+  - `OtpEmailContent` (`user-2fa-otp`)
+  - `PasswordResetContent` (`user-password-reset`)
 
 ## Typical Usage
 
@@ -297,7 +300,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.1.9`
+- version `1.2.0`
 
 Relevant package dependencies used across the set include:
 
@@ -321,7 +324,7 @@ Relevant package dependencies used across the set include:
 - Metadata timestamps and actor fields are populated automatically by the EF repository base classes when supported by the entity type.
 - User-based scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is supplied.
 - Cache packages provide string-keyed, typed value abstractions that can be backed by Redis or another key-value cache store.
-- Message packages use event envelopes with topic-style event type names and optional RabbitMQ transport support.
+- Message packages use a fixed event envelope (`id`, `source`, `tenant`, `action`, `timestamp`, `contentVersion`, `content`) with hyphenated single-segment actions and optional RabbitMQ transport support.
 - Keycloak helpers cover authentication registration, role claim transformation, admin user operations, and identity email/lifecycle event payloads.
 
 ## Developer

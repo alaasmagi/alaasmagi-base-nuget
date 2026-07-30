@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Base.Keycloak.Events;
 
 /// <summary>
-/// Represents the <c>content</c> payload of a Keycloak verify-email event (<c>user.verify</c>).
+/// Represents the <c>content</c> payload of a Keycloak verify-email event (<c>user-verify</c>).
 /// </summary>
 public class VerifyEmailContent
 {
@@ -38,10 +38,11 @@ public class VerifyEmailContent
     public required DateTimeOffset ExpiresAt { get; init; }
 
     /// <summary>
-    /// Gets the number of minutes until the action link expires.
+    /// Gets the stated validity of the action link in minutes. This is the policy value the email text
+    /// quotes; it is not recomputed from <see cref="ExpiresAt"/> at render time.
     /// </summary>
-    [JsonPropertyName("expiresInMinutes")]
-    public int ExpiresInMinutes { get; init; }
+    [JsonPropertyName("validForMinutes")]
+    public int ValidForMinutes { get; init; }
 
     /// <summary>
     /// Gets the optional locale for the email action.

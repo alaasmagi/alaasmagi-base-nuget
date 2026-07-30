@@ -4,9 +4,9 @@ namespace Base.Keycloak.Events;
 
 /// <summary>
 /// Represents the <c>content</c> payload of a Keycloak user lifecycle event
-/// (<c>user.created</c>, <c>user.updated</c>, <c>user.enabled</c>, <c>user.disabled</c>, <c>user.deleted</c>).
+/// (<c>user-created</c>, <c>user-updated</c>, <c>user-enabled</c>, <c>user-disabled</c>, <c>user-deleted</c>).
 /// Only <see cref="UserId"/> is guaranteed to be present; the remaining fields are omitted for
-/// events such as <c>user.deleted</c>.
+/// events such as <c>user-deleted</c>.
 /// </summary>
 public class UserEventContent
 {

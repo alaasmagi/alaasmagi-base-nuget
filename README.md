@@ -39,7 +39,7 @@ The repository currently contains these NuGet packages:
 - `alaasmagi.Base.Message.RabbitMQ`
 - `alaasmagi.Base.Keycloak`
 
-All projects currently target `.NET 10.0` and declare version `1.1.9`.
+All projects currently target `.NET 10.0` and declare version `1.2.0`.
 
 ## What Each Package Does
 
@@ -77,7 +77,7 @@ All projects currently target `.NET 10.0` and declare version `1.1.9`.
 ### Messaging
 
 - `Base.Contracts.Message` defines event-envelope, publisher, and handler contracts.
-- `Base.Message` provides base event envelopes, default event type names, and event-handler registration helpers.
+- `Base.Message` provides base event envelopes, default action/source/exchange names, routing-key and content-version helpers, and event-handler registration helpers.
 - `Base.Message.RabbitMQ` provides RabbitMQ options, connection management, event publishing, listener base support, and publisher registration helpers.
 
 ### Keycloak

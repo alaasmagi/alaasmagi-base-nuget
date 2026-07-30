@@ -53,7 +53,10 @@ public class RabbitMqEventPublisher : IBaseEventPublisher, IAsyncDisposable
             var properties = new BasicProperties
             {
                 Persistent = true,
-                ContentType = "application/json"
+                ContentType = "application/json",
+                // The envelope id is the idempotency key; surface it as the AMQP MessageId so consumers can
+                // dedupe redeliveries without deserializing the body first.
+                MessageId = message.Id.ToString()
             };
 
             await channel.BasicPublishAsync(
