@@ -15,29 +15,25 @@ namespace Base.Message.RabbitMQ;
 public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
 {
     private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly RabbitMqOptions _options;
     private readonly IBaseEventHandler<TContent> _handler;
     private readonly ILogger _logger;
     private readonly string _queueName;
-    private readonly string[] _routingKeyPatterns;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RabbitMqConsumerBase{TContent}"/> class.
+    /// Initializes a new instance of the <see cref="RabbitMqConsumerBase{TContent}"/> class. The queue and its
+    /// bindings are part of the externally managed topology and must exist before the consumer starts; this
+    /// class only consumes from <paramref name="queueName"/>.
     /// </summary>
     protected RabbitMqConsumerBase(
         RabbitMqConnectionManager connectionManager,
-        RabbitMqOptions options,
         IBaseEventHandler<TContent> handler,
         ILogger logger,
-        string queueName,
-        params string[] routingKeyPatterns)
+        string queueName)
     {
         _connectionManager = connectionManager;
-        _options = options;
         _handler = handler;
         _logger = logger;
         _queueName = queueName;
-        _routingKeyPatterns = routingKeyPatterns;
     }
 
     /// <summary>
@@ -47,7 +43,8 @@ public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
     protected virtual ushort PrefetchCount => 10;
 
     /// <summary>
-    /// Declares the queue bindings and starts consuming RabbitMQ messages until the service is stopped.
+    /// Starts consuming RabbitMQ messages from the pre-existing queue until the service is stopped. The queue
+    /// and its bindings are not declared here; they are managed outside this package.
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -55,25 +52,6 @@ public abstract class RabbitMqConsumerBase<TContent> : BackgroundService
 
         try
         {
-            await channel.QueueDeclareAsync(
-                queue: _queueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                cancellationToken: stoppingToken);
-
-            foreach (var pattern in _routingKeyPatterns)
-            {
-                if (string.IsNullOrWhiteSpace(_options.Exchange))
-                {
-                    throw new InvalidOperationException(
-                        "RabbitMQ routing key bindings require RabbitMqOptions.Exchange to be configured. " +
-                        "Omit routing key patterns for queue-only/default-exchange consumers.");
-                }
-
-                await channel.QueueBindAsync(_queueName, _options.Exchange, pattern, cancellationToken: stoppingToken);
-            }
-
             await channel.BasicQosAsync(
                 prefetchSize: 0,
                 prefetchCount: PrefetchCount,

@@ -87,8 +87,9 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
     }
 
     /// <summary>
-    /// Creates a new channel on the shared connection and declares the configured exchange when enabled.
-    /// The caller owns the returned channel and is responsible for disposing it.
+    /// Creates a new channel on the shared connection. The caller owns the returned channel and is
+    /// responsible for disposing it. No topology is declared here: exchanges, queues and bindings exist
+    /// before the app starts and are managed outside this package.
     /// </summary>
     /// <param name="options">Optional channel creation options, for example to enable publisher confirmations.</param>
     /// <param name="cancellationToken">A token used to cancel the asynchronous operation.</param>
@@ -98,19 +99,7 @@ public class RabbitMqConnectionManager : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         var connection = await GetConnectionAsync(cancellationToken);
-        var channel = await connection.CreateChannelAsync(options, cancellationToken);
-
-        if (_options.DeclareExchange && !string.IsNullOrWhiteSpace(_options.Exchange))
-        {
-            await channel.ExchangeDeclareAsync(
-                exchange: _options.Exchange,
-                type: _options.ExchangeType,
-                durable: _options.ExchangeDurable,
-                autoDelete: _options.ExchangeAutoDelete,
-                cancellationToken: cancellationToken);
-        }
-
-        return channel;
+        return await connection.CreateChannelAsync(options, cancellationToken);
     }
 
     /// <summary>

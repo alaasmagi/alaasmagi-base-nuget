@@ -1,7 +1,9 @@
 namespace Base.Message.RabbitMQ;
 
 /// <summary>
-/// Provides RabbitMQ connection and optional exchange settings for the base message integration.
+/// Provides RabbitMQ connection settings and the exchange to publish to. Connection settings come from
+/// configuration only; no credentials are hard-coded. This package publishes and consumes against topology
+/// (exchanges, queues, bindings, permissions) that already exists — it never declares it.
 /// </summary>
 public class RabbitMqOptions
 {
@@ -31,31 +33,15 @@ public class RabbitMqOptions
     public string VirtualHost { get; init; } = "/";
 
     /// <summary>
-    /// Gets the exchange used to publish and consume events.
-    /// Leave empty to use queue-only/default-exchange behavior.
+    /// Gets the exchange to publish to. Required, with no default: the exchange is part of the externally
+    /// managed topology and the publisher will not guess it.
     /// </summary>
-    public string Exchange { get; init; } = string.Empty;
+    public required string Exchange { get; init; }
 
     /// <summary>
-    /// Gets the exchange type to declare when <see cref="Exchange"/> is configured.
+    /// Gets how long to wait for a broker publisher confirmation before treating a publish as failed.
     /// </summary>
-    public string ExchangeType { get; init; } = global::RabbitMQ.Client.ExchangeType.Topic;
-
-    /// <summary>
-    /// Gets a value indicating whether the configured exchange should be declared by this library.
-    /// Set to false when topology is managed externally.
-    /// </summary>
-    public bool DeclareExchange { get; init; } = true;
-
-    /// <summary>
-    /// Gets a value indicating whether the declared exchange should be durable.
-    /// </summary>
-    public bool ExchangeDurable { get; init; } = true;
-
-    /// <summary>
-    /// Gets a value indicating whether the declared exchange should auto-delete.
-    /// </summary>
-    public bool ExchangeAutoDelete { get; init; } = false;
+    public TimeSpan PublishConfirmTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// Gets a value indicating whether TLS (amqps) should be used for the connection.

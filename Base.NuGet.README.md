@@ -169,8 +169,8 @@ Provides:
 Defines:
 
 - `IBaseEventEnvelope<TContent>`
-- `IBaseEventEnvelope<TContent, TTimestamp>`
 - `IBaseEventPublisher`
+- `PublishResult`
 - `IBaseEventHandler<TContent>`
 - `IBaseEventDispatcher<TContent>`
 
@@ -185,14 +185,9 @@ Defines the Keycloak service and data abstractions:
 
 Provides:
 
-- `BaseEventEnvelope<TContent>`
-- `BaseEventEnvelope<TContent, TTimestamp>`
-- `DefaultMessageActions`
-- `DefaultMessageSources`
-- `DefaultExchanges`
+- `BaseEventEnvelope<TContent>` (with `BaseEventEnvelope<TContent>.Create(...)` factory)
+- `DefaultSources`
 - `BaseRoutingKey`
-- `BaseContentVersion`
-- event-handler dependency injection helpers
 
 ### `alaasmagi.Base.Message.RabbitMQ`
 
@@ -300,7 +295,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.2.0`
+- version `1.3.0`
 
 Relevant package dependencies used across the set include:
 

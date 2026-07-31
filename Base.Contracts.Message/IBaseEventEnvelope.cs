@@ -1,35 +1,27 @@
 namespace Base.Contracts.Message;
 
 /// <summary>
-/// Defines a base event envelope contract that uses <see cref="DateTime"/> timestamps.
+/// Defines the base event envelope contract. The envelope carries a strongly typed content payload plus the
+/// fixed metadata every message on the platform shares. Its members and their order are fixed:
+/// <c>id, source, tenant, action, timestamp, contentVersion, content</c>.
 /// </summary>
-public interface IBaseEventEnvelope<TContent> : IBaseEventEnvelope<TContent, DateTime>
-{
-}
-
-/// <summary>
-/// Defines a base event envelope contract with a strongly typed timestamp.
-/// </summary>
-/// <typeparam name="TTimestamp">The timestamp type used by the event envelope.</typeparam>
-/// <typeparam name="TContent">The payload type used by the event envelope.</typeparam>
-public interface IBaseEventEnvelope<TContent, TTimestamp>
+/// <typeparam name="TContent">The content payload type carried by the event envelope.</typeparam>
+public interface IBaseEventEnvelope<TContent>
 {
     /// <summary>
-    /// Gets and/or initializes the unique message identifier (UUID). It is the idempotency key consumers
-    /// use to detect and drop redeliveries.
+    /// Gets and/or initializes the unique message identifier (a UUID string), one per message. It is the
+    /// idempotency key consumers use to detect and drop redeliveries.
     /// </summary>
-    public Guid Id { get; init; }
+    public string Id { get; init; }
 
     /// <summary>
-    /// Gets and/or initializes the publisher of the message: a single-segment lowercase slug that matches
-    /// the publisher's broker credentials (for example <c>identity</c>).
+    /// Gets and/or initializes the publisher of the message: a single segment that identifies who published
+    /// it (for example <c>identity-hub</c>). A plain string; the package does not validate it.
     /// </summary>
     public string Source { get; init; }
 
     /// <summary>
-    /// Gets and/or initializes the subject the message concerns: a single segment equal to the Keycloak
-    /// realm name. Equals <see cref="Source"/> for an app publishing its own messages; only the identity
-    /// provider publishes on behalf of a tenant it is not.
+    /// Gets and/or initializes the subject the message concerns: a single segment (the Keycloak realm name).
     /// </summary>
     public string Tenant { get; init; }
 
@@ -40,19 +32,20 @@ public interface IBaseEventEnvelope<TContent, TTimestamp>
     public string Action { get; init; }
 
     /// <summary>
-    /// Gets and/or initializes the timestamp at which the message was published (ISO 8601, UTC).
+    /// Gets and/or initializes the publish time as an ISO-8601 UTC string with millisecond precision and a
+    /// <c>Z</c> suffix (for example <c>2026-07-31T12:34:56.789Z</c>).
     /// </summary>
-    public TTimestamp Timestamp { get; init; }
+    public string Timestamp { get; init; }
 
     /// <summary>
-    /// Gets and/or initializes the schema version of <see cref="Content"/> as a <c>"major.minor"</c> string.
-    /// Compatibility is decided on the major component only; consumers ignore unknown fields.
+    /// Gets and/or initializes the content version supplied by the emitter and passed through verbatim. The
+    /// package neither validates nor interprets it: the emitter supplies it, the consumer reads it.
     /// </summary>
     public string ContentVersion { get; init; }
 
     /// <summary>
     /// Gets and/or initializes the payload associated with the event. Its shape is defined per
-    /// <see cref="Action"/> and is flat with no nesting wrapper.
+    /// <see cref="Action"/>.
     /// </summary>
     public TContent Content { get; init; }
 }

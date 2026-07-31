@@ -39,7 +39,7 @@ The repository currently contains these NuGet packages:
 - `alaasmagi.Base.Message.RabbitMQ`
 - `alaasmagi.Base.Keycloak`
 
-All projects currently target `.NET 10.0` and declare version `1.2.0`.
+All projects currently target `.NET 10.0` and declare version `1.3.0`.
 
 ## What Each Package Does
 
