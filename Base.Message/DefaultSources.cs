@@ -10,7 +10,7 @@ namespace Base.Message;
 public static class DefaultSources
 {
     public const string MessageHub = "message-hub";
-    public const string EmailHub = "email-hub";
+    public const string NotificationHub = "notification-hub";
     public const string IdentityHub = "identity-hub";
     public const string ErrorHub = "error-hub";
     public const string AiHub = "ai-hub";
