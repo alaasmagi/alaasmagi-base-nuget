@@ -295,7 +295,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.3.0`
+- version `1.3.1`
 
 Relevant package dependencies used across the set include:
 
