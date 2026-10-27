@@ -37,10 +37,12 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Registers a hosted RabbitMQ consumer. Requires <see cref="AddRabbitMq"/> or
-    /// <see cref="AddRabbitMqPublisher"/> to have registered the connection and options, and the
-    /// consumer's <see cref="IBaseEventHandler{TContent}"/> to be registered separately.
+    /// <see cref="AddRabbitMqPublisher"/> to have registered the connection and options. A
+    /// <see cref="RabbitMqConsumerBase{TContent}"/> also needs its <see cref="IBaseEventHandler{TContent}"/>
+    /// registered separately.
     /// </summary>
-    /// <typeparam name="TConsumer">The concrete <see cref="RabbitMqConsumerBase{TContent}"/> implementation to host.</typeparam>
+    /// <typeparam name="TConsumer">The concrete <see cref="RabbitMqConsumerBase{TContent}"/> or
+    /// <see cref="RabbitMqDeliveryConsumerBase"/> implementation to host.</typeparam>
     /// <param name="services">The service collection to register the consumer with.</param>
     /// <returns>The same service collection so additional calls can be chained.</returns>
     public static IServiceCollection AddRabbitMqConsumer<TConsumer>(this IServiceCollection services)

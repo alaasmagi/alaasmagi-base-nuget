@@ -17,6 +17,7 @@ public static class ErrorDefaults
         public const string ConcurrencyTokenRequired = "CONCURRENCY_TOKEN_REQUIRED";
         public const string SoftDeleteFailed = "SOFT_DELETE_FAILED";
         public const string RestoreFailed = "RESTORE_FAILED";
+        public const string SaveFailed = "SAVE_FAILED";
     }
 
     public static class Messages
@@ -32,5 +33,6 @@ public static class ErrorDefaults
         public const string ConcurrencyTokenRequired = "A concurrency token is required for this operation.";
         public const string SoftDeleteFailed = "The data could not be soft-deleted.";
         public const string RestoreFailed = "The data could not be restored.";
+        public const string SaveFailed = "The changes could not be saved.";
     }
 }

@@ -39,7 +39,7 @@ The repository currently contains these NuGet packages:
 - `alaasmagi.Base.Message.RabbitMQ`
 - `alaasmagi.Base.Keycloak`
 
-All projects currently target `.NET 10.0` and declare version `1.3.1`.
+All projects currently target `.NET 10.0` and declare version `1.4.0`.
 
 ## What Each Package Does
 
@@ -82,7 +82,7 @@ All projects currently target `.NET 10.0` and declare version `1.3.1`.
 
 ### Keycloak
 
-- `Base.Keycloak` provides JWT bearer and OpenID Connect registration helpers for Keycloak.
+- `Base.Keycloak` provides JWT bearer and OpenID Connect registration helpers for Keycloak, configurable through `KeycloakOptions` and combinable in one host.
 - `Base.Keycloak` also provides role claim transformation, admin API models/client helpers, and identity lifecycle/action event payloads.
 
 ## Typical Flow

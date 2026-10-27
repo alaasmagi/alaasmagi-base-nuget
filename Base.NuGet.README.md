@@ -101,7 +101,7 @@ Defines:
 
 - `IBaseRepository<TEntity, TResourceKey, TActor>`
 - `IBaseRepositorySoftDelete<TEntity, TResourceKey, TActor>`
-- `IBaseUow`
+- `IBaseUow` (`SaveChangesAsync`, and `TrySaveChangesAsync` which returns rejected writes as a failed `IMethodResponse<int>`)
 
 ### `alaasmagi.Base.DataAccess.EF`
 
@@ -173,6 +173,7 @@ Defines:
 - `PublishResult`
 - `IBaseEventHandler<TContent>`
 - `IBaseEventDispatcher<TContent>`
+- `MessageDelivery`, `MessageDisposition`
 
 ### `alaasmagi.Base.Contracts.Keycloak`
 
@@ -197,6 +198,7 @@ Provides:
 - `RabbitMqConnectionManager`
 - `RabbitMqEventPublisher`
 - `RabbitMqConsumerBase<TContent>`
+- `RabbitMqDeliveryConsumerBase` (raw delivery with routing key; the handler decides ack, requeue or reject)
 - RabbitMQ publisher and consumer dependency injection helpers
 
 ### `alaasmagi.Base.Keycloak`
@@ -204,7 +206,7 @@ Provides:
 Provides:
 
 - Keycloak JWT bearer authentication registration
-- Keycloak OpenID Connect authentication registration
+- Keycloak OpenID Connect authentication registration (configurable scopes, cookie paths, claim types and PAR), and JWT bearer as an extra scheme next to it
 - Keycloak role claim transformation
 - Keycloak admin API options and a typed `IKeycloakAdminClient` implementation
 - `KeycloakUser` and `KeycloakRole` admin models
@@ -295,7 +297,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.3.1`
+- version `1.4.0`
 
 Relevant package dependencies used across the set include:
 

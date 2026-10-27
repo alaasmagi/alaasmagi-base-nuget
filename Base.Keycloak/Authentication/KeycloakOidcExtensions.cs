@@ -21,24 +21,69 @@ public static class KeycloakOidcExtensions
     {
         services.AddSingleton(options);
         services.AddTransient<IClaimsTransformation, KeycloakRoleClaimsTransformation>();
-        services.AddOpenIdConnectAccessTokenManagement();
+
+        if (options.UseAccessTokenManagement)
+        {
+            services.AddOpenIdConnectAccessTokenManagement();
+        }
 
         return services.AddAuthentication(auth =>
             {
                 auth.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 auth.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             })
-            .AddCookie()
+            .AddCookie(cookie =>
+            {
+                if (options.LoginPath != null)
+                {
+                    cookie.LoginPath = options.LoginPath;
+                }
+
+                if (options.LogoutPath != null)
+                {
+                    cookie.LogoutPath = options.LogoutPath;
+                }
+
+                if (options.AccessDeniedPath != null)
+                {
+                    cookie.AccessDeniedPath = options.AccessDeniedPath;
+                }
+            })
             .AddOpenIdConnect(oidc =>
             {
                 oidc.Authority = options.Authority;
                 oidc.ClientId = options.ClientId;
                 oidc.ClientSecret = options.ClientSecret;
+                oidc.RequireHttpsMetadata = options.RequireHttpsMetadata;
                 oidc.ResponseType = "code";
                 oidc.SaveTokens = true;
-                oidc.Scope.Add("offline_access");
                 oidc.GetClaimsFromUserInfoEndpoint = true;
-                oidc.TokenValidationParameters.NameClaimType = "preferred_username";
+                oidc.MapInboundClaims = options.MapInboundClaims;
+
+                if (options.Scopes == null)
+                {
+                    oidc.Scope.Add("offline_access");
+                }
+                else
+                {
+                    oidc.Scope.Clear();
+                    foreach (var scope in options.Scopes)
+                    {
+                        oidc.Scope.Add(scope);
+                    }
+                }
+
+                if (options.DisablePushedAuthorization)
+                {
+                    oidc.PushedAuthorizationBehavior = PushedAuthorizationBehavior.Disable;
+                }
+
+                oidc.TokenValidationParameters.NameClaimType = options.NameClaimType ?? "preferred_username";
+
+                if (options.RoleClaimType != null)
+                {
+                    oidc.TokenValidationParameters.RoleClaimType = options.RoleClaimType;
+                }
             });
     }
 }
