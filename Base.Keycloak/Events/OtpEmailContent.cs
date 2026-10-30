@@ -1,30 +1,13 @@
+using Base.Message;
 using System.Text.Json.Serialization;
 
 namespace Base.Keycloak.Events;
 
 /// <summary>
-/// Represents the <c>content</c> payload of a Keycloak one-time password event (<c>user-2fa-otp</c>).
+/// Represents the <c>content</c> payload of a Keycloak one-time password command (<c>user-2fa-otp</c>).
 /// </summary>
-public class OtpEmailContent
+public class OtpEmailContent : BaseNotificationContent, IExpiringNotificationContent
 {
-    /// <summary>
-    /// Gets the Keycloak user identifier.
-    /// </summary>
-    [JsonPropertyName("userId")]
-    public required string UserId { get; init; }
-
-    /// <summary>
-    /// Gets the email address that should receive the one-time password.
-    /// </summary>
-    [JsonPropertyName("email")]
-    public required string Email { get; init; }
-
-    /// <summary>
-    /// Gets the user's full name.
-    /// </summary>
-    [JsonPropertyName("fullName")]
-    public required string FullName { get; init; }
-
     /// <summary>
     /// Gets the one-time password code.
     /// </summary>
@@ -35,6 +18,7 @@ public class OtpEmailContent
     /// Gets the expiration timestamp for the one-time password.
     /// </summary>
     [JsonPropertyName("expiresAt")]
+    [JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))]
     public required DateTimeOffset ExpiresAt { get; init; }
 
     /// <summary>
@@ -44,10 +28,4 @@ public class OtpEmailContent
     [JsonPropertyName("validForMinutes")]
     public int ValidForMinutes { get; init; }
 
-    /// <summary>
-    /// Gets the optional locale for the email action.
-    /// </summary>
-    [JsonPropertyName("locale")]
-    public string? Locale { get; init; }
 }
-

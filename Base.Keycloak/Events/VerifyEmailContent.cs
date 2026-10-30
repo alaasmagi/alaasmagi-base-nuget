@@ -1,30 +1,13 @@
+using Base.Message;
 using System.Text.Json.Serialization;
 
 namespace Base.Keycloak.Events;
 
 /// <summary>
-/// Represents the <c>content</c> payload of a Keycloak verify-email event (<c>user-verify</c>).
+/// Represents the <c>content</c> payload of a Keycloak verify-email command (<c>user-verify</c>).
 /// </summary>
-public class VerifyEmailContent
+public class VerifyEmailContent : BaseNotificationContent, IExpiringNotificationContent
 {
-    /// <summary>
-    /// Gets the Keycloak user identifier.
-    /// </summary>
-    [JsonPropertyName("userId")]
-    public required string UserId { get; init; }
-
-    /// <summary>
-    /// Gets the email address that should receive the verification link.
-    /// </summary>
-    [JsonPropertyName("email")]
-    public required string Email { get; init; }
-
-    /// <summary>
-    /// Gets the user's full name.
-    /// </summary>
-    [JsonPropertyName("fullName")]
-    public required string FullName { get; init; }
-
     /// <summary>
     /// Gets the Keycloak action link the user follows to verify their email address.
     /// </summary>
@@ -35,6 +18,7 @@ public class VerifyEmailContent
     /// Gets the expiration timestamp for the action link.
     /// </summary>
     [JsonPropertyName("expiresAt")]
+    [JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))]
     public required DateTimeOffset ExpiresAt { get; init; }
 
     /// <summary>
@@ -44,10 +28,4 @@ public class VerifyEmailContent
     [JsonPropertyName("validForMinutes")]
     public int ValidForMinutes { get; init; }
 
-    /// <summary>
-    /// Gets the optional locale for the email action.
-    /// </summary>
-    [JsonPropertyName("locale")]
-    public string? Locale { get; init; }
 }
-

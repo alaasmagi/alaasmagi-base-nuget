@@ -20,24 +20,28 @@ public class UserEventContent
     /// Gets the user's email address, when supplied.
     /// </summary>
     [JsonPropertyName("email")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Email { get; init; }
 
     /// <summary>
     /// Gets the user's user name, when supplied.
     /// </summary>
     [JsonPropertyName("username")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Username { get; init; }
 
     /// <summary>
     /// Gets the user's full name, when supplied.
     /// </summary>
     [JsonPropertyName("fullName")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? FullName { get; init; }
 
     /// <summary>
     /// Gets the user's locale, when supplied.
     /// </summary>
     [JsonPropertyName("locale")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Locale { get; init; }
 }
 

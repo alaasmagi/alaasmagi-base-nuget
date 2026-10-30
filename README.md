@@ -39,7 +39,7 @@ The repository currently contains these NuGet packages:
 - `alaasmagi.Base.Message.RabbitMQ`
 - `alaasmagi.Base.Keycloak`
 
-All projects currently target `.NET 10.0` and declare version `1.4.0`.
+All projects currently target `.NET 10.0` and declare version `1.5.0`.
 
 ## What Each Package Does
 
@@ -77,7 +77,7 @@ All projects currently target `.NET 10.0` and declare version `1.4.0`.
 ### Messaging
 
 - `Base.Contracts.Message` defines event-envelope, publisher, and handler contracts.
-- `Base.Message` provides base event envelopes, default action/source/exchange names, routing-key and content-version helpers, and event-handler registration helpers.
+- `Base.Message` provides base event envelopes, default source names, routing-key validation, notification recipient content, and command expiry support.
 - `Base.Message.RabbitMQ` provides RabbitMQ options, connection management, event publishing, listener base support, and publisher registration helpers.
 
 ### Keycloak
@@ -169,3 +169,36 @@ public class TodoRepository
 - Cache packages define a provider-neutral abstraction; concrete Redis or other store implementations can inherit from `BaseCache`.
 - Messaging packages provide contracts and reusable RabbitMQ infrastructure for topic-based event workflows.
 - Keycloak helpers are intended for ASP.NET Core applications that need Keycloak authentication, role claims, admin user operations, or identity event payloads.
+
+
+## Platform notification contract
+
+The authoritative examples are in `docs/contracts/event-contract.json`. Values in square brackets are
+placeholders, not literal wire values. Use `contentVersion: "1.0"`.
+
+- Publish domain events to `identity-hub.events` and notification commands to
+  `notification-hub.commands`. Both are durable topic exchanges in vhost `/`, managed externally.
+  Configure `RabbitMqOptions.Exchange`; the packages do not declare exchanges or queues.
+- Use `DefaultSources.IdentityHub` for Keycloak and `DefaultSources.NotificationHub` for the notification
+  service. Apps use their existing slug for both source and tenant; Keycloak uses the realm as tenant.
+- Derive routing keys only through `BaseRoutingKey.For(envelope)`. Routing keys never belong in the body.
+- Command content inherits `BaseNotificationContent`: `UserId` (UUID string), `Email`, `FullName`,
+  `Locale` (BCP 47 including region, e.g. `et-EE`), and `TimeZone` (IANA, e.g. `Europe/Tallinn`).
+  Publish one command per recipient. Event content does not inherit this base.
+- `Locale` and `TimeZone` retain nullable setters for source compatibility, but both must be populated
+  for commands. The RabbitMQ publisher validates recipient metadata before contacting the broker.
+- `BaseEventEnvelope<T>.Create(...)` preserves the existing signature and copies expiry from
+  `IExpiringNotificationContent`, implemented by the three existing Keycloak command DTOs.
+  For other commands use `CreateCommand(source, tenant, action, "1.0", content, expiresAt)`.
+  Invoice expiry is null; lunch expiry is the end of today's latest offer, converted to UTC.
+- Events omit `expiresAt`; commands write it even when null. The envelope converter preserves this
+  distinction with default System.Text.Json settings and with null omission enabled. Missing expiry
+  deserializes as null. When constructing Keycloak envelopes directly, set envelope expiry to the
+  payload expiry; the publisher rejects mismatches. Broker TTL remains a separate transport option.
+- Existing `VerifyEmailContent`, `OtpEmailContent`, and `PasswordResetContent` names remain supported.
+  `UserEventContent` omits absent optional properties; use only `UserId` for `user-deleted`.
+- Send integer fields (`validForMinutes`, `fractions`) as JSON numbers, money as invariant decimal
+  strings with a separate currency, dates as `yyyy-MM-dd`, and times of day as `HH:mm`.
+- Never log or persist notification content such as OTP codes or action links.
+
+Run contract tests with `dotnet test tests/Base.Message.Tests/Base.Message.Tests.csproj -c Release`.

@@ -2,7 +2,7 @@ namespace Base.Contracts.Message;
 
 /// <summary>
 /// Defines the base event envelope contract. The envelope carries a strongly typed content payload plus the
-/// fixed metadata every message on the platform shares. Its members and their order are fixed:
+/// fixed metadata every message on the platform shares. Events carry the following fields; commands additionally carry expiresAt:
 /// <c>id, source, tenant, action, timestamp, contentVersion, content</c>.
 /// </summary>
 /// <typeparam name="TContent">The content payload type carried by the event envelope.</typeparam>
@@ -36,6 +36,9 @@ public interface IBaseEventEnvelope<TContent>
     /// <c>Z</c> suffix (for example <c>2026-07-31T12:34:56.789Z</c>).
     /// </summary>
     public string Timestamp { get; init; }
+
+    /// <summary>Gets the optional command expiry. Missing values deserialize as null.</summary>
+    public DateTimeOffset? ExpiresAt { get => null; init { } }
 
     /// <summary>
     /// Gets and/or initializes the content version supplied by the emitter and passed through verbatim. The

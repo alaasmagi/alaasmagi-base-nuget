@@ -297,7 +297,7 @@ All packages in this repository currently target:
 
 All package projects currently declare:
 
-- version `1.4.0`
+- version `1.5.0`
 
 Relevant package dependencies used across the set include:
 
@@ -321,7 +321,7 @@ Relevant package dependencies used across the set include:
 - Metadata timestamps and actor fields are populated automatically by the EF repository base classes when supported by the entity type.
 - User-based scoping is applied automatically when the entity implements `IBaseEntityUserId<TActor>` and a non-default actor value is supplied.
 - Cache packages provide string-keyed, typed value abstractions that can be backed by Redis or another key-value cache store.
-- Message packages use a fixed event envelope (`id`, `source`, `tenant`, `action`, `timestamp`, `contentVersion`, `content`) with hyphenated single-segment actions and optional RabbitMQ transport support.
+- Message packages use the platform event envelope (`id`, `source`, `tenant`, `action`, `timestamp`, `contentVersion`, `content`); commands additionally include `expiresAt`. Routing segments must be non-empty and contain no dots.
 - Keycloak helpers cover authentication registration, role claim transformation, admin user operations, and identity email/lifecycle event payloads.
 
 ## Developer
@@ -332,3 +332,36 @@ Developed and maintained by Aleksander Laasmägi.
 - LinkedIn profile: [alaasmagi](https://www.linkedin.com/in/alaasmagi/)
 - Email: [aleksander.laasmagi@gmail.com](mailto:aleksander.laasmagi@gmail.com)
 - Repository: [alaasmagi-base-nuget](https://github.com/alaasmagi/alaasmagi-base-nuget)
+
+
+## Platform notification contract
+
+The authoritative examples are in `docs/contracts/event-contract.json`. Values in square brackets are
+placeholders, not literal wire values. Use `contentVersion: "1.0"`.
+
+- Publish domain events to `identity-hub.events` and notification commands to
+  `notification-hub.commands`. Both are durable topic exchanges in vhost `/`, managed externally.
+  Configure `RabbitMqOptions.Exchange`; the packages do not declare exchanges or queues.
+- Use `DefaultSources.IdentityHub` for Keycloak and `DefaultSources.NotificationHub` for the notification
+  service. Apps use their existing slug for both source and tenant; Keycloak uses the realm as tenant.
+- Derive routing keys only through `BaseRoutingKey.For(envelope)`. Routing keys never belong in the body.
+- Command content inherits `BaseNotificationContent`: `UserId` (UUID string), `Email`, `FullName`,
+  `Locale` (BCP 47 including region, e.g. `et-EE`), and `TimeZone` (IANA, e.g. `Europe/Tallinn`).
+  Publish one command per recipient. Event content does not inherit this base.
+- `Locale` and `TimeZone` retain nullable setters for source compatibility, but both must be populated
+  for commands. The RabbitMQ publisher validates recipient metadata before contacting the broker.
+- `BaseEventEnvelope<T>.Create(...)` preserves the existing signature and copies expiry from
+  `IExpiringNotificationContent`, implemented by the three existing Keycloak command DTOs.
+  For other commands use `CreateCommand(source, tenant, action, "1.0", content, expiresAt)`.
+  Invoice expiry is null; lunch expiry is the end of today's latest offer, converted to UTC.
+- Events omit `expiresAt`; commands write it even when null. The envelope converter preserves this
+  distinction with default System.Text.Json settings and with null omission enabled. Missing expiry
+  deserializes as null. When constructing Keycloak envelopes directly, set envelope expiry to the
+  payload expiry; the publisher rejects mismatches. Broker TTL remains a separate transport option.
+- Existing `VerifyEmailContent`, `OtpEmailContent`, and `PasswordResetContent` names remain supported.
+  `UserEventContent` omits absent optional properties; use only `UserId` for `user-deleted`.
+- Send integer fields (`validForMinutes`, `fractions`) as JSON numbers, money as invariant decimal
+  strings with a separate currency, dates as `yyyy-MM-dd`, and times of day as `HH:mm`.
+- Never log or persist notification content such as OTP codes or action links.
+
+Run contract tests with `dotnet test tests/Base.Message.Tests/Base.Message.Tests.csproj -c Release`.
